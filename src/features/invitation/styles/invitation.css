@@ -427,7 +427,7 @@ body {
   display: block;
   width: 100%;
   margin-top: 30px;
-  margin-bottom: 126px;
+  margin-bottom: 150px;
   padding: 28px 22px 30px;
   overflow: hidden;
   text-align: center;
@@ -436,6 +436,16 @@ body {
   background:
     linear-gradient(135deg, rgba(242, 198, 200, 0.42), rgba(255, 255, 255, 0.68));
   box-shadow: 0 14px 34px rgba(80, 64, 45, 0.08);
+}
+
+.rsvp__eyebrow {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
 }
 
 .rsvp__title {
@@ -452,6 +462,78 @@ body {
   font-size: 0.95rem;
 }
 
+.rsvp-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  text-align: left;
+}
+
+.rsvp-form__field {
+  display: grid;
+  gap: 7px;
+}
+
+.rsvp-form__field span,
+.rsvp-form__fieldset legend {
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.rsvp-form__field input,
+.rsvp-form__field select,
+.rsvp-form__field textarea {
+  width: 100%;
+  border: 1px solid rgba(141, 106, 84, 0.16);
+  border-radius: 16px;
+  padding: 13px 14px;
+  color: var(--color-text-strong);
+  background: rgba(255, 250, 240, 0.78);
+  font: inherit;
+  font-family: var(--font-ui);
+  outline: none;
+}
+
+.rsvp-form__field textarea {
+  resize: vertical;
+}
+
+.rsvp-form__field input:focus,
+.rsvp-form__field select:focus,
+.rsvp-form__field textarea:focus {
+  border-color: rgba(201, 111, 146, 0.48);
+  box-shadow: 0 0 0 4px rgba(242, 198, 200, 0.28);
+}
+
+.rsvp-form__fieldset {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid rgba(141, 106, 84, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.rsvp-form__fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-strong);
+  font-family: var(--font-ui);
+  font-weight: 700;
+}
+
+.rsvp-form__fieldset input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-text-strong);
+}
+
 .rsvp__button {
   position: relative;
   z-index: 2;
@@ -463,14 +545,42 @@ body {
   margin-top: 24px;
   padding: 14px 18px;
   border-radius: 999px;
+  border: none;
   background: var(--color-text-strong);
   color: white;
   font-family: var(--font-ui);
   font-size: 1rem;
   font-weight: 800;
   text-decoration: none;
+  cursor: pointer;
   animation-play-state: paused;
   will-change: transform;
+}
+
+.rsvp__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.rsvp-form__status {
+  min-height: 22px;
+  margin: 2px 0 0;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.rsvp-form__status[data-state='success'] {
+  color: #4f7d5a;
+}
+
+.rsvp-form__status[data-state='error'] {
+  color: #a45b5b;
+}
+
+.rsvp-form__status[data-state='loading'] {
+  color: var(--color-muted);
 }
 
 .rsvp__button::after {

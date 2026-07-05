@@ -5,8 +5,7 @@ export interface InvitationPlace {
 }
 
 export interface InvitationRsvp {
-  whatsappNumber: string;
-  message: string;
+  googleScriptUrl: string;
   deadline: string;
 }
 

@@ -5,21 +5,20 @@ export const invitation: Invitation = {
   intro: "La espera se ha llenado de emociones, de miradas al futuro y manos en la pancita soñando con el mañana.",
   title: "¿Niño o Niña?",
   subtitle: "Acompáñanos a descubrir la noticia más esperada.",
-  parents: "Josafat & Familia",
-  month: "AGOSTO",
-  day: "24",
-  date: "Sábado 24 de agosto",
-  time: "5:00 PM",
-  eventDateIso: "2026-08-24T17:00:00-06:00",
+  parents: "Catherine & Josafat",
+  month: "JULIO",
+  day: "25",
+  date: "Sábado 25 de julio del 2026",
+  time: "3:00 PM",
+  eventDateIso: "2026-07-25T17:00:00-06:00",
   place: {
-    name: "Jardín por confirmar",
-    address: "Saltillo, Coahuila",
-    mapsUrl: "#"
+    name: "Calle 22 #323",
+    address: "Gaspar Valdez, 25016 Saltillo, Coah.",
+    mapsUrl: "https://www.google.com.mx/maps/place/C.+22,+Gaspar+Valdez,+25016+Saltillo,+Coah./@25.4218894,-100.9069379,17z/data=!3m1!4b1!4m6!3m5!1s0x86880de82caf3bf3:0xf6714bfa6e7d352a!8m2!3d25.4218846!4d-100.904363!16s%2Fg%2F1vf9ct7b?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D"
   },
   dressCode: "Ven vestido de rosa o azul según tu predicción.",
   rsvp: {
-    whatsappNumber: "528440000000",
-    message: "Confirmo mi asistencia al Gender Reveal",
-    deadline: "Confirmar antes del 15 de agosto"
+    googleScriptUrl: "https://docs.google.com/spreadsheets/d/1RJzPqANqteB52urnoysa5v2Sd4_ZLHkr4mj5QfA8tI8/edit?usp=sharing",
+    deadline: "Confirmar antes del 15 de julio"
   }
 };

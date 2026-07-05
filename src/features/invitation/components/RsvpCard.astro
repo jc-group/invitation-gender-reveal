@@ -1,19 +1,143 @@
 ---
 import type { Invitation } from '../invitation.types';
 
-interface Props {
+type Props = {
   invitation: Invitation;
-}
+};
 
 const { invitation } = Astro.props;
-
-const whatsappUrl = `https://wa.me/${invitation.rsvp.whatsappNumber}?text=${encodeURIComponent(invitation.rsvp.message)}`;
 ---
 
-<section class="rsvp scroll-reveal" data-scroll-reveal>
-  <h2 class="rsvp__title">Confirma tu asistencia</h2>
-  <p class="rsvp__text">{invitation.rsvp.deadline}</p>
-  <a href={whatsappUrl} class="rsvp__button" target="_blank" rel="noopener noreferrer">
-    Confirmar por WhatsApp
-  </a>
+<section class="rsvp scroll-reveal" data-scroll-reveal aria-label="Confirmar asistencia">
+  <p class="rsvp__eyebrow">RSVP</p>
+
+  <h2 class="rsvp__title">
+    Confirma tu asistencia
+  </h2>
+
+  <p class="rsvp__text">
+    {invitation.rsvp.deadline}
+  </p>
+
+  <form
+    class="rsvp-form"
+    data-rsvp-form
+    data-endpoint={invitation.rsvp.googleScriptUrl}
+  >
+    <label class="rsvp-form__field">
+      <span>Nombre</span>
+      <input
+        type="text"
+        name="name"
+        autocomplete="name"
+        required
+        placeholder="Tu nombre"
+      />
+    </label>
+
+    <label class="rsvp-form__field">
+      <span>¿Asistirás?</span>
+      <select name="attendance" required>
+        <option value="">Selecciona una opción</option>
+        <option value="Sí asistiré">Sí asistiré</option>
+        <option value="No podré asistir">No podré asistir</option>
+      </select>
+    </label>
+
+    <label class="rsvp-form__field">
+      <span>Número de personas</span>
+      <input
+        type="number"
+        name="guests"
+        min="1"
+        max="10"
+        value="1"
+        required
+      />
+    </label>
+
+    <fieldset class="rsvp-form__fieldset">
+      <legend>Tu predicción</legend>
+
+      <label>
+        <input type="radio" name="prediction" value="Niña" required />
+        <span>Niña</span>
+      </label>
+
+      <label>
+        <input type="radio" name="prediction" value="Niño" required />
+        <span>Niño</span>
+      </label>
+    </fieldset>
+
+    <label class="rsvp-form__field">
+      <span>Teléfono opcional</span>
+      <input
+        type="tel"
+        name="phone"
+        autocomplete="tel"
+        placeholder="844..."
+      />
+    </label>
+
+    <label class="rsvp-form__field">
+      <span>Mensaje opcional</span>
+      <textarea
+        name="message"
+        rows="3"
+        placeholder="Déjanos un mensaje"
+      ></textarea>
+    </label>
+
+    <input type="hidden" name="event" value="Gender Reveal Catherine & Josafat" />
+
+    <button class="rsvp__button" type="submit" data-rsvp-submit>
+      Confirmar asistencia
+    </button>
+
+    <p class="rsvp-form__status" data-rsvp-status aria-live="polite"></p>
+  </form>
 </section>
+
+<script is:inline>
+  var form = document.querySelector('[data-rsvp-form]');
+  var statusElement = document.querySelector('[data-rsvp-status]');
+  var submitButton = document.querySelector('[data-rsvp-submit]');
+
+  if (form && statusElement && submitButton) {
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      var endpoint = form.getAttribute('data-endpoint');
+
+      if (!endpoint) {
+        statusElement.textContent = 'Aún falta configurar el formulario.';
+        statusElement.dataset.state = 'error';
+        return;
+      }
+
+      var formData = new FormData(form);
+
+      submitButton.disabled = true;
+      statusElement.textContent = 'Guardando confirmación...';
+      statusElement.dataset.state = 'loading';
+
+      try {
+        await fetch(endpoint, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: formData,
+        });
+
+        form.reset();
+        statusElement.textContent = 'Gracias, tu confirmación fue registrada.';
+        statusElement.dataset.state = 'success';
+      } catch (err) {
+        statusElement.textContent = 'No se pudo guardar. Intenta de nuevo.';
+        statusElement.dataset.state = 'error';
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+  }
+</script>
