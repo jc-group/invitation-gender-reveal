@@ -11,14 +11,32 @@ const { invitation } = Astro.props;
 <section
   class="countdown scroll-reveal"
   data-scroll-reveal
-  aria-label="Contador para el evento"
+  data-countdown
   data-event-date={invitation.eventDateIso}
+  aria-label="Cuenta regresiva para el evento"
 >
   <p class="countdown__eyebrow">Faltan</p>
 
-  <div class="countdown__value" aria-live="polite">
-    <strong data-countdown-days>--</strong>
-    <span data-countdown-label>días</span>
+  <div class="countdown__grid" aria-live="polite">
+    <div class="countdown__item">
+      <strong data-countdown-days>--</strong>
+      <span>Días</span>
+    </div>
+
+    <div class="countdown__item">
+      <strong data-countdown-hours>--</strong>
+      <span>Horas</span>
+    </div>
+
+    <div class="countdown__item">
+      <strong data-countdown-minutes>--</strong>
+      <span>Min</span>
+    </div>
+
+    <div class="countdown__item">
+      <strong data-countdown-seconds>--</strong>
+      <span>Seg</span>
+    </div>
   </div>
 
   <p class="countdown__text">
@@ -27,38 +45,52 @@ const { invitation } = Astro.props;
 </section>
 
 <script is:inline>
-  var countdown = document.querySelector('[data-event-date]');
+  var countdownElement = document.querySelector('[data-countdown]');
 
-  if (countdown) {
-    var eventDateValue = countdown.getAttribute('data-event-date');
-    var daysElement = countdown.querySelector('[data-countdown-days]');
-    var labelElement = countdown.querySelector('[data-countdown-label]');
+  if (countdownElement) {
+    var eventDateValue = countdownElement.getAttribute('data-event-date');
+
+    var daysElement = countdownElement.querySelector('[data-countdown-days]');
+    var hoursElement = countdownElement.querySelector('[data-countdown-hours]');
+    var minutesElement = countdownElement.querySelector('[data-countdown-minutes]');
+    var secondsElement = countdownElement.querySelector('[data-countdown-seconds]');
+
+    var formatNumber = function(value) {
+      return String(value).padStart(2, '0');
+    };
 
     var updateCountdown = function() {
-      if (!eventDateValue || !daysElement || !labelElement) return;
-
-      var now = new Date();
-      var eventDate = new Date(eventDateValue);
-
-      if (Number.isNaN(eventDate.getTime())) {
-        daysElement.textContent = '--';
-        labelElement.textContent = 'días';
+      if (!eventDateValue || !daysElement || !hoursElement || !minutesElement || !secondsElement) {
         return;
       }
 
-      var diffMs = eventDate.getTime() - now.getTime();
-      var diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      var eventDate = new Date(eventDateValue);
+      var now = new Date();
 
-      daysElement.textContent = String(diffDays);
-      labelElement.textContent = diffDays === 1 ? 'día' : 'días';
-
-      if (diffDays === 0) {
-        labelElement.textContent = 'hoy';
+      if (Number.isNaN(eventDate.getTime())) {
+        daysElement.textContent = '--';
+        hoursElement.textContent = '--';
+        minutesElement.textContent = '--';
+        secondsElement.textContent = '--';
+        return;
       }
+
+      var diffMs = Math.max(0, eventDate.getTime() - now.getTime());
+
+      var totalSeconds = Math.floor(diffMs / 1000);
+      var days = Math.floor(totalSeconds / 86400);
+      var hours = Math.floor((totalSeconds % 86400) / 3600);
+      var minutes = Math.floor((totalSeconds % 3600) / 60);
+      var seconds = totalSeconds % 60;
+
+      daysElement.textContent = String(days);
+      hoursElement.textContent = formatNumber(hours);
+      minutesElement.textContent = formatNumber(minutes);
+      secondsElement.textContent = formatNumber(seconds);
     };
 
     updateCountdown();
 
-    window.setInterval(updateCountdown, 1000 * 60 * 30);
+    window.setInterval(updateCountdown, 1000);
   }
 </script>
