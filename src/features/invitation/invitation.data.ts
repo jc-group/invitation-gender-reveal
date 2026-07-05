@@ -18,7 +18,6 @@ export const invitation: Invitation = {
   },
   dressCode: "Ven vestido de rosa o azul según tu predicción.",
   rsvp: {
-    googleScriptUrl: "https://docs.google.com/spreadsheets/d/1RJzPqANqteB52urnoysa5v2Sd4_ZLHkr4mj5QfA8tI8/edit?usp=sharing",
     deadline: "Confirmar antes del 15 de julio"
   }
 };

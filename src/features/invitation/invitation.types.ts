@@ -5,7 +5,6 @@ export interface InvitationPlace {
 }
 
 export interface InvitationRsvp {
-  googleScriptUrl: string;
   deadline: string;
 }
 
