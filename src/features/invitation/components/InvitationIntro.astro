@@ -1,0 +1,15 @@
+---
+import type { Invitation } from '../invitation.types';
+
+interface Props {
+  invitation: Invitation;
+}
+
+const { invitation } = Astro.props;
+---
+
+<section class="invitation-intro scroll-reveal" data-scroll-reveal aria-label="Mensaje de bienvenida">
+  <p class="invitation-intro__text">
+    {invitation.intro}
+  </p>
+</section>

@@ -1,0 +1,19 @@
+---
+import type { Invitation } from '../invitation.types';
+
+interface Props {
+  invitation: Invitation;
+}
+
+const { invitation } = Astro.props;
+---
+
+<section class="hero scroll-reveal" data-scroll-reveal>
+  <span class="hero__eyebrow">{invitation.eyebrow}</span>
+
+  <h1 class="hero__title">{invitation.title}</h1>
+
+  <p class="hero__subtitle">{invitation.subtitle}</p>
+
+  <p class="hero__parents">{invitation.parents}</p>
+</section>

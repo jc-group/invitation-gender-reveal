@@ -1,0 +1,27 @@
+---
+import type { Invitation } from '../invitation.types';
+
+interface Props {
+  invitation: Invitation;
+}
+
+const { invitation } = Astro.props;
+---
+
+<section class="details scroll-reveal" data-scroll-reveal aria-label="Detalles del evento">
+  <article class="details__card">
+    <div class="details__item">
+      <span class="details__label">Lugar</span>
+      <strong>{invitation.place.name}</strong>
+      <p>{invitation.place.address}</p>
+      <a href={invitation.place.mapsUrl} target="_blank" rel="noreferrer">Ver ubicación</a>
+    </div>
+
+    <div class="details__divider"></div>
+
+    <div class="details__item">
+      <span class="details__label">Dress code</span>
+      <strong>{invitation.dressCode}</strong>
+    </div>
+  </article>
+</section>

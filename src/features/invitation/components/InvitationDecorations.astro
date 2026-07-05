@@ -1,0 +1,81 @@
+---
+const assets = {
+  moonBunny: '/assets/invitation/watercolor/moon-bunny.png',
+  rainbowBunny: '/assets/invitation/watercolor/rainbow-bunny.png',
+  cloudLeft: '/assets/invitation/watercolor/cloud-left.png',
+  cloudBottom: '/assets/invitation/watercolor/cloud-bottom.png',
+  shootingStar: '/assets/invitation/watercolor/shooting-star.png',
+  stars: '/assets/invitation/watercolor/stars.png',
+};
+---
+
+<div class="decorations" aria-hidden="true">
+  <img
+    class="decorations__asset decorations__moon-bunny"
+    src={assets.moonBunny}
+    alt=""
+    loading="eager"
+    decoding="async"
+  />
+
+  <img
+    class="decorations__asset decorations__shooting-star"
+    src={assets.shootingStar}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <img
+    class="decorations__asset decorations__stars"
+    src={assets.stars}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <img
+    class="decorations__asset decorations__cloud-left"
+    src={assets.cloudLeft}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <img
+    class="decorations__asset decorations__cloud-bottom"
+    src={assets.cloudBottom}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+
+  <img
+    class="decorations__asset decorations__rainbow-bunny"
+    src={assets.rainbowBunny}
+    alt=""
+    loading="lazy"
+    decoding="async"
+  />
+</div>
+
+<style>
+  @keyframes float-soft {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>

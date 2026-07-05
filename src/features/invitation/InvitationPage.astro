@@ -1,0 +1,74 @@
+---
+import { invitation } from './invitation.data';
+import InvitationDecorations from './components/InvitationDecorations.astro';
+import InvitationIntro from './components/InvitationIntro.astro';
+import InvitationHero from './components/InvitationHero.astro';
+import InvitationDateBlock from './components/InvitationDateBlock.astro';
+import EventDetails from './components/EventDetails.astro';
+import RsvpCard from './components/RsvpCard.astro';
+import './styles/invitation.css';
+---
+
+<main class="invitation-page">
+  <section class="invitation-shell" aria-label="Invitación Gender Reveal">
+    <InvitationDecorations />
+    <div class="invitation-content">
+      <InvitationIntro invitation={invitation} />
+      <InvitationHero invitation={invitation} />
+      <InvitationDateBlock invitation={invitation} />
+      <EventDetails invitation={invitation} />
+      <RsvpCard invitation={invitation} />
+    </div>
+  </section>
+</main>
+
+<script is:inline>
+  (function() {
+    var revealElements = document.querySelectorAll('[data-scroll-reveal]');
+    var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function showElement(el) {
+      el.classList.add('is-visible');
+    }
+
+    function checkVisibility() {
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      revealElements.forEach(function(el) {
+        if (el.classList.contains('is-visible')) return;
+        var rect = el.getBoundingClientRect();
+        if (rect.top < viewportHeight * 0.9) {
+          showElement(el);
+        }
+      });
+    }
+
+    if (prefersReducedMotion) {
+      revealElements.forEach(function(el) {
+        showElement(el);
+      });
+    } else {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (!entry.isIntersecting) return;
+          showElement(entry.target);
+          observer.unobserve(entry.target);
+        });
+      }, {
+        threshold: 0.26,
+        rootMargin: '0px 0px -18% 0px'
+      });
+
+      revealElements.forEach(function(el) {
+        observer.observe(el);
+      });
+
+      window.setTimeout(function() {
+        checkVisibility();
+      }, 500);
+
+      window.addEventListener('scroll', function() {
+        checkVisibility();
+      }, { passive: true });
+    }
+  })();
+</script>

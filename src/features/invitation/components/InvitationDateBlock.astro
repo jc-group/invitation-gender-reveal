@@ -1,0 +1,26 @@
+---
+import type { Invitation } from '../invitation.types';
+
+interface Props {
+  invitation: Invitation;
+}
+
+const { invitation } = Astro.props;
+---
+
+<section class="date-block scroll-reveal" data-scroll-reveal aria-label="Fecha y hora del evento">
+  <div class="date-block__side">
+    <span class="date-block__label">Mes</span>
+    <strong>{invitation.month}</strong>
+  </div>
+
+  <div class="date-block__day">
+    <span class="date-block__label">Día</span>
+    <strong>{invitation.day}</strong>
+  </div>
+
+  <div class="date-block__side">
+    <span class="date-block__label">Hora</span>
+    <strong>{invitation.time}</strong>
+  </div>
+</section>

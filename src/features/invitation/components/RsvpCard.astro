@@ -1,0 +1,19 @@
+---
+import type { Invitation } from '../invitation.types';
+
+interface Props {
+  invitation: Invitation;
+}
+
+const { invitation } = Astro.props;
+
+const whatsappUrl = `https://wa.me/${invitation.rsvp.whatsappNumber}?text=${encodeURIComponent(invitation.rsvp.message)}`;
+---
+
+<section class="rsvp scroll-reveal" data-scroll-reveal>
+  <h2 class="rsvp__title">Confirma tu asistencia</h2>
+  <p class="rsvp__text">{invitation.rsvp.deadline}</p>
+  <a href={whatsappUrl} class="rsvp__button" target="_blank" rel="noopener noreferrer">
+    Confirmar por WhatsApp
+  </a>
+</section>
