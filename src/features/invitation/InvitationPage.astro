@@ -6,12 +6,14 @@ import InvitationHero from './components/InvitationHero.astro';
 import InvitationDateBlock from './components/InvitationDateBlock.astro';
 import EventDetails from './components/EventDetails.astro';
 import RsvpCard from './components/RsvpCard.astro';
+import InvitationMusic from './components/InvitationMusic.astro';
 import './styles/invitation.css';
 ---
 
 <main class="invitation-page">
   <section class="invitation-shell" aria-label="Invitación Gender Reveal">
     <InvitationDecorations />
+
     <div class="invitation-content">
       <InvitationIntro invitation={invitation} />
       <InvitationHero invitation={invitation} />
@@ -19,6 +21,8 @@ import './styles/invitation.css';
       <EventDetails invitation={invitation} />
       <RsvpCard invitation={invitation} />
     </div>
+
+    <InvitationMusic />
   </section>
 </main>
 

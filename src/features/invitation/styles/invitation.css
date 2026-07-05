@@ -762,3 +762,66 @@ body {
     min-height: 760px;
   }
 }
+
+.music-control {
+  position: sticky;
+  right: 18px;
+  bottom: 18px;
+  z-index: 8;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -72px;
+  padding: 0 4px 4px;
+  pointer-events: none;
+}
+
+.music-control__audio {
+  display: none;
+}
+
+.music-control__button {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(141, 106, 84, 0.16);
+  border-radius: 999px;
+  color: var(--color-text-strong);
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 10px 26px rgba(80, 64, 45, 0.12);
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.music-control__button.is-playing {
+  background: rgba(242, 198, 200, 0.72);
+}
+
+.music-control__icon {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  color: white;
+  background: var(--color-text-strong);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+@media (hover: hover) {
+  .music-control__button:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .music-control__button {
+    transition: none !important;
+  }
+}

@@ -1,0 +1,87 @@
+---
+const audioSrc = '/assets/invitation/audio/background-music.mp3';
+---
+
+<div class="music-control" data-music-control>
+  <audio
+    class="music-control__audio"
+    src={audioSrc}
+    preload="auto"
+    loop
+    playsinline
+    data-music-audio
+  ></audio>
+
+  <button
+    class="music-control__button"
+    type="button"
+    aria-label="Activar música"
+    data-music-toggle
+  >
+    <span class="music-control__icon" aria-hidden="true">♪</span>
+    <span class="music-control__text" data-music-label>Música</span>
+  </button>
+</div>
+
+<script is:inline>
+  (function() {
+    var audio = document.querySelector('[data-music-audio]');
+    var toggleButton = document.querySelector('[data-music-toggle]');
+    var label = document.querySelector('[data-music-label]');
+
+    if (audio && toggleButton && label) {
+      var isPlaying = false;
+
+      var updateUi = function() {
+        toggleButton.classList.toggle('is-playing', isPlaying);
+        toggleButton.setAttribute(
+          'aria-label',
+          isPlaying ? 'Pausar música' : 'Activar música'
+        );
+        label.textContent = isPlaying ? 'Pausar' : 'Música';
+      };
+
+      var playAudio = async function() {
+        try {
+          audio.volume = 0.55;
+          await audio.play();
+          isPlaying = true;
+          updateUi();
+        } catch (e) {
+          isPlaying = false;
+          updateUi();
+        }
+      };
+
+      var pauseAudio = function() {
+        audio.pause();
+        isPlaying = false;
+        updateUi();
+      };
+
+      toggleButton.addEventListener('click', async function() {
+        if (isPlaying) {
+          pauseAudio();
+          return;
+        }
+        await playAudio();
+      });
+
+      window.addEventListener(
+        'pointerdown',
+        async function() {
+          if (!isPlaying) {
+            await playAudio();
+          }
+        },
+        { once: true, passive: true }
+      );
+
+      window.addEventListener('DOMContentLoaded', async function() {
+        await playAudio();
+      });
+
+      updateUi();
+    }
+  })();
+</script>
