@@ -100,11 +100,11 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
     <p class="rsvp-form__status" data-rsvp-status aria-live="polite"></p>
   </form>
 
-  <div class="rsvp-success" data-rsvp-success hidden>
-    <p class="rsvp-success__icon">🎉</p>
-    <h3 class="rsvp-success__title">Gracias por confirmar</h3>
-    <p class="rsvp-success__text">Nos emociona compartir este momento contigo.</p>
-  </div>
+  <section class="rsvp-result" data-rsvp-result hidden>
+    <span class="rsvp-result__sparkle" aria-hidden="true"></span>
+    <h3 class="rsvp-result__title">Gracias por confirmar</h3>
+    <p class="rsvp-result__text">Nos emociona compartir este momento contigo.</p>
+  </section>
 </section>
 
 <script is:inline>
@@ -112,8 +112,9 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
     var form = document.querySelector('[data-rsvp-form]');
     var statusElement = document.querySelector('[data-rsvp-status]');
     var submitButton = document.querySelector('[data-rsvp-submit]');
+    var resultElement = document.querySelector('[data-rsvp-result]');
 
-    if (!form || !statusElement || !submitButton) return;
+    if (!form || !statusElement || !submitButton || !resultElement) return;
 
     var supabaseUrl = form.getAttribute('data-supabase-url');
     var supabaseAnonKey = form.getAttribute('data-supabase-anon-key');
@@ -179,8 +180,8 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
         form.reset();
         form.hidden = true;
-        var successCard = document.querySelector('[data-rsvp-success]');
-        if (successCard) successCard.hidden = false;
+        resultElement.hidden = false;
+        window.dispatchEvent(new CustomEvent('rsvp:submitted'));
       } catch (err) {
         console.error(err);
         statusElement.textContent = 'No se pudo guardar. Intenta de nuevo.';

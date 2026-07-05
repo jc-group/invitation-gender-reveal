@@ -76,3 +76,37 @@ PUBLIC_SUPABASE_ANON_KEY=
 - Validación en CHECK constraint para valores esperados
 - No se expone service_role key
 - Se usa anon key para insertar desde frontend
+
+## 5. Función para votos públicos
+
+No se debe crear policy SELECT para anon.
+
+Para mostrar porcentajes públicos, crear una función RPC que solo regrese conteos agregados:
+
+```sql
+create or replace function public.get_rsvp_vote_counts()
+returns table (
+  girl_votes bigint,
+  boy_votes bigint,
+  total_votes bigint
+)
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    count(*) filter (where prediction = 'Niña')::bigint as girl_votes,
+    count(*) filter (where prediction = 'Niño')::bigint as boy_votes,
+    count(*) filter (where prediction in ('Niña', 'Niño'))::bigint as total_votes
+  from public.rsvps;
+$$;
+
+grant execute on function public.get_rsvp_vote_counts() to anon;
+```
+
+## 6. Sección LiveVotes
+
+La sección LiveVotes usa polling cada 15 segundos contra `get_rsvp_vote_counts()`.
+No usa SELECT directo a `rsvps`.
+También se actualiza inmediatamente cuando el usuario confirma RSVP mediante el evento `rsvp:submitted`.
+```

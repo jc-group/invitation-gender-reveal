@@ -1,0 +1,159 @@
+---
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+---
+
+<section
+  class="live-votes scroll-reveal"
+  data-scroll-reveal
+  data-live-votes
+  data-supabase-url={supabaseUrl}
+  data-supabase-anon-key={supabaseAnonKey}
+  aria-label="Votos en vivo"
+>
+  <p class="live-votes__eyebrow">Predicciones en vivo</p>
+
+  <h2 class="live-votes__title">
+    ¿Qué crees que será?
+  </h2>
+
+  <div class="live-votes__row">
+    <div class="live-votes__avatar live-votes__avatar--girl">
+      <img
+        src="/assets/invitation/votes/girl.jpg"
+        alt="Predicción niña"
+        loading="lazy"
+        decoding="async"
+        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+      />
+      <span hidden>Niña</span>
+    </div>
+
+    <div class="live-votes__content">
+      <div class="live-votes__labels">
+        <span><strong data-live-girl-percent>50%</strong> Niña</span>
+        <span><strong data-live-boy-percent>50%</strong> Niño</span>
+      </div>
+
+      <div
+        class="live-votes__bar"
+        role="img"
+        aria-label="Porcentaje de votos para niña y niño"
+      >
+        <div class="live-votes__fill live-votes__fill--girl" data-live-girl-fill></div>
+        <div class="live-votes__fill live-votes__fill--boy" data-live-boy-fill></div>
+      </div>
+
+      <p class="live-votes__total" data-live-vote-total>
+        Cargando votos...
+      </p>
+    </div>
+
+    <div class="live-votes__avatar live-votes__avatar--boy">
+      <img
+        src="/assets/invitation/votes/boy.jpg"
+        alt="Predicción niño"
+        loading="lazy"
+        decoding="async"
+        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+      />
+      <span hidden>Niño</span>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  const liveVotesElements = document.querySelectorAll('[data-live-votes]');
+
+  liveVotesElements.forEach((liveVotesElement) => {
+    const supabaseUrl = liveVotesElement.getAttribute('data-supabase-url');
+    const supabaseAnonKey = liveVotesElement.getAttribute('data-supabase-anon-key');
+
+    const girlPercentElement = liveVotesElement.querySelector('[data-live-girl-percent]');
+    const boyPercentElement = liveVotesElement.querySelector('[data-live-boy-percent]');
+    const girlFillElement = liveVotesElement.querySelector('[data-live-girl-fill]');
+    const boyFillElement = liveVotesElement.querySelector('[data-live-boy-fill]');
+    const voteTotalElement = liveVotesElement.querySelector('[data-live-vote-total]');
+
+    const updateVotesUi = ({ girlVotes, boyVotes, totalVotes }) => {
+      const safeTotal = Number(totalVotes || 0);
+      const safeGirlVotes = Number(girlVotes || 0);
+      const safeBoyVotes = Number(boyVotes || 0);
+
+      const girlPercent =
+        safeTotal > 0 ? Math.round((safeGirlVotes / safeTotal) * 100) : 50;
+
+      const boyPercent =
+        safeTotal > 0 ? 100 - girlPercent : 50;
+
+      if (girlPercentElement) {
+        girlPercentElement.textContent = `${girlPercent}%`;
+      }
+
+      if (boyPercentElement) {
+        boyPercentElement.textContent = `${boyPercent}%`;
+      }
+
+      if (girlFillElement) {
+        girlFillElement.style.width = `${girlPercent}%`;
+      }
+
+      if (boyFillElement) {
+        boyFillElement.style.width = `${boyPercent}%`;
+      }
+
+      if (voteTotalElement) {
+        voteTotalElement.textContent =
+          safeTotal === 1
+            ? '1 voto registrado'
+            : `${safeTotal} votos registrados`;
+      }
+    };
+
+    const fetchVoteCounts = async () => {
+      if (!supabaseUrl || !supabaseAnonKey) {
+        if (voteTotalElement) {
+          voteTotalElement.textContent = 'Falta configurar Supabase.';
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_rsvp_vote_counts`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({}),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Vote counts error ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const data = Array.isArray(payload) ? payload[0] : payload;
+
+        updateVotesUi({
+          girlVotes: data?.girl_votes || 0,
+          boyVotes: data?.boy_votes || 0,
+          totalVotes: data?.total_votes || 0,
+        });
+      } catch (error) {
+        console.error(error);
+
+        if (voteTotalElement) {
+          voteTotalElement.textContent = 'No pudimos cargar las predicciones por ahora.';
+        }
+      }
+    };
+
+    fetchVoteCounts();
+
+    window.setInterval(fetchVoteCounts, 15000);
+
+    window.addEventListener('rsvp:submitted', fetchVoteCounts);
+  });
+</script>
