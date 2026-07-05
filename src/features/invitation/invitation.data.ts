@@ -10,6 +10,7 @@ export const invitation: Invitation = {
   day: "24",
   date: "Sábado 24 de agosto",
   time: "5:00 PM",
+  eventDateIso: "2026-08-24T17:00:00-06:00",
   place: {
     name: "Jardín por confirmar",
     address: "Saltillo, Coahuila",

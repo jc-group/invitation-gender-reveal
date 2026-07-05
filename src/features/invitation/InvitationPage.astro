@@ -4,6 +4,7 @@ import InvitationDecorations from './components/InvitationDecorations.astro';
 import InvitationIntro from './components/InvitationIntro.astro';
 import InvitationHero from './components/InvitationHero.astro';
 import InvitationDateBlock from './components/InvitationDateBlock.astro';
+import CountdownTimer from './components/CountdownTimer.astro';
 import EventDetails from './components/EventDetails.astro';
 import RsvpCard from './components/RsvpCard.astro';
 import InvitationMusic from './components/InvitationMusic.astro';
@@ -18,6 +19,7 @@ import './styles/invitation.css';
       <InvitationIntro invitation={invitation} />
       <InvitationHero invitation={invitation} />
       <InvitationDateBlock invitation={invitation} />
+      <CountdownTimer invitation={invitation} />
       <EventDetails invitation={invitation} />
       <RsvpCard invitation={invitation} />
     </div>

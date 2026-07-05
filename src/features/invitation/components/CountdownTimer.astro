@@ -1,0 +1,64 @@
+---
+import type { Invitation } from '../invitation.types';
+
+type Props = {
+  invitation: Invitation;
+};
+
+const { invitation } = Astro.props;
+---
+
+<section
+  class="countdown scroll-reveal"
+  data-scroll-reveal
+  aria-label="Contador para el evento"
+  data-event-date={invitation.eventDateIso}
+>
+  <p class="countdown__eyebrow">Faltan</p>
+
+  <div class="countdown__value" aria-live="polite">
+    <strong data-countdown-days>--</strong>
+    <span data-countdown-label>días</span>
+  </div>
+
+  <p class="countdown__text">
+    para descubrir la gran noticia
+  </p>
+</section>
+
+<script is:inline>
+  var countdown = document.querySelector('[data-event-date]');
+
+  if (countdown) {
+    var eventDateValue = countdown.getAttribute('data-event-date');
+    var daysElement = countdown.querySelector('[data-countdown-days]');
+    var labelElement = countdown.querySelector('[data-countdown-label]');
+
+    var updateCountdown = function() {
+      if (!eventDateValue || !daysElement || !labelElement) return;
+
+      var now = new Date();
+      var eventDate = new Date(eventDateValue);
+
+      if (Number.isNaN(eventDate.getTime())) {
+        daysElement.textContent = '--';
+        labelElement.textContent = 'días';
+        return;
+      }
+
+      var diffMs = eventDate.getTime() - now.getTime();
+      var diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+      daysElement.textContent = String(diffDays);
+      labelElement.textContent = diffDays === 1 ? 'día' : 'días';
+
+      if (diffDays === 0) {
+        labelElement.textContent = 'hoy';
+      }
+    };
+
+    updateCountdown();
+
+    window.setInterval(updateCountdown, 1000 * 60 * 30);
+  }
+</script>

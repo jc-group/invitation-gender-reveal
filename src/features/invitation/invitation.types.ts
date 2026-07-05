@@ -20,6 +20,7 @@ export interface Invitation {
   day: string;
   date: string;
   time: string;
+  eventDateIso: string;
   place: InvitationPlace;
   dressCode: string;
   rsvp: InvitationRsvp;

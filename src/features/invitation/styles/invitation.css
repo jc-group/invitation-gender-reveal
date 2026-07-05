@@ -231,7 +231,7 @@ body {
   align-items: center;
   gap: 12px;
   max-width: 330px;
-  margin: 28px auto 30px;
+  margin: 28px auto 24px;
   text-align: center;
 }
 
@@ -276,13 +276,67 @@ body {
   line-height: 0.88;
 }
 
+.countdown {
+  position: relative;
+  z-index: 3;
+  max-width: 300px;
+  margin: 0 auto 30px;
+  padding: 18px 18px 20px;
+  text-align: center;
+  border: 1px solid rgba(141, 106, 84, 0.1);
+  border-radius: 22px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.68), rgba(242, 198, 200, 0.22));
+  box-shadow: 0 12px 28px rgba(80, 64, 45, 0.07);
+  backdrop-filter: blur(4px);
+}
+
+.countdown__eyebrow {
+  margin: 0 0 6px;
+  color: var(--color-muted);
+  font-family: var(--font-ui);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.countdown__value {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-strong);
+}
+
+.countdown__value strong {
+  font-size: clamp(2.8rem, 12vw, 3.8rem);
+  font-weight: 700;
+  line-height: 0.9;
+}
+
+.countdown__value span {
+  font-family: var(--font-main);
+  font-size: clamp(1.25rem, 5vw, 1.65rem);
+  font-weight: 600;
+}
+
+.countdown__text {
+  margin: 8px 0 0;
+  color: var(--color-text);
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
 .details.scroll-reveal,
-.rsvp.scroll-reveal {
+.rsvp.scroll-reveal,
+.countdown.scroll-reveal {
   transform: translateY(38px) scale(0.98);
 }
 
 .details.scroll-reveal.is-visible,
-.rsvp.scroll-reveal.is-visible {
+.rsvp.scroll-reveal.is-visible,
+.countdown.scroll-reveal.is-visible {
   transform: translateY(0) scale(1);
 }
 
@@ -351,7 +405,7 @@ body {
   z-index: 3;
   display: block;
   width: 100%;
-  margin-top: 32px;
+  margin-top: 30px;
   margin-bottom: 126px;
   padding: 28px 22px 30px;
   overflow: hidden;
@@ -732,7 +786,8 @@ body {
   .hero__subtitle,
   .hero__parents,
   .date-block__side,
-  .date-block__day {
+  .date-block__day,
+  .countdown {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;
