@@ -25,6 +25,8 @@ alter table public.rsvps enable row level security;
 
 grant insert on table public.rsvps to anon;
 
+drop policy if exists "Allow public RSVP inserts" on public.rsvps;
+
 create policy "Allow public RSVP inserts"
 on public.rsvps
 for insert
@@ -34,6 +36,8 @@ with check (
   and attendance in ('Sí asistiré', 'No podré asistir')
   and guests between 1 and 10
   and prediction in ('Niña', 'Niño')
+  and phone is not null
+  and phone <> ''
 );
 ```
 
@@ -64,8 +68,8 @@ PUBLIC_SUPABASE_ANON_KEY=
 | attendance | text | "Sí asistiré" o "No podré asistir" |
 | guests | integer | Número de personas (1-10) |
 | prediction | text | "Niña" o "Niño" |
-| phone | text | Teléfono opcional |
-| message | text | Mensaje opcional |
+| phone | text | Teléfono |
+| message | text | Mensaje (opcional) |
 | user_agent | text | User agent del navegador |
 | source | text | Origen ("invitation-web") |
 

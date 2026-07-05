@@ -75,17 +75,18 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
     </fieldset>
 
     <label class="rsvp-form__field">
-      <span>Teléfono opcional</span>
+      <span>Teléfono</span>
       <input
         type="tel"
         name="phone"
         autocomplete="tel"
         placeholder="844..."
+        required
       />
     </label>
 
     <label class="rsvp-form__field">
-      <span>Mensaje opcional</span>
+      <span>Mensaje</span>
       <textarea
         name="message"
         rows="3"
@@ -135,7 +136,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
       var phone = form.querySelector('[name="phone"]').value;
       var message = form.querySelector('[name="message"]').value;
 
-      if (!name || !attendance || !prediction) {
+      if (!name || !attendance || !prediction || !phone) {
         statusElement.textContent = 'Completa los campos obligatorios.';
         statusElement.dataset.state = 'error';
         return;
