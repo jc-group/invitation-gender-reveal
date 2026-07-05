@@ -1,4 +1,4 @@
-@font-face {
+/* @font-face {
   font-family: "Cormorant Infant";
   src: url("/fonts/cormorant-infant/cormorant-infant-v22-latin-regular.woff2") format("woff2");
   font-weight: 400;
@@ -12,10 +12,10 @@
   font-weight: 600;
   font-style: normal;
   font-display: swap;
-}
+} */
 
 :root {
-  --font-main: "Cormorant Infant", Georgia, "Times New Roman", serif;
+  --font-main: Georgia, "Times New Roman", serif;
   --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --color-page-bg: #efe8d8;
