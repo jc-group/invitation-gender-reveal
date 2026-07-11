@@ -8,6 +8,12 @@ export interface InvitationRsvp {
   deadline: string;
 }
 
+export interface InvitationGift {
+  eyebrow: string;
+  intro: string;
+  closing: string;
+}
+
 export interface Invitation {
   eyebrow: string;
   intro: string;
@@ -21,5 +27,6 @@ export interface Invitation {
   eventDateIso: string;
   place: InvitationPlace;
   dressCode: string;
+  gift: InvitationGift;
   rsvp: InvitationRsvp;
 }

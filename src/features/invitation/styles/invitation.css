@@ -421,6 +421,26 @@ body {
   background: rgba(141, 106, 84, 0.1);
 }
 
+.details__gift {
+  margin-top: 4px;
+  padding-top: 14px;
+}
+
+.details__gift-intro {
+  margin: 4px 0 14px;
+  color: rgba(94, 76, 64, 0.86);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.details__gift-note {
+  margin: 14px 0 0;
+  color: rgba(94, 76, 64, 0.86);
+  font-size: 0.95rem;
+  line-height: 1.55;
+  font-style: italic;
+}
+
 .rsvp {
   position: relative;
   z-index: 3;

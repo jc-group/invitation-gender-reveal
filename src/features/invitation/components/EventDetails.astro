@@ -23,5 +23,13 @@ const { invitation } = Astro.props;
       <span class="details__label">Dress code</span>
       <strong>{invitation.dressCode}</strong>
     </div>
+
+    <div class="details__divider"></div>
+
+    <div class="details__gift">
+      <span class="details__label">{invitation.gift.eyebrow}</span>
+      <p class="details__gift-intro">{invitation.gift.intro}</p>
+      <p class="details__gift-note">{invitation.gift.closing}</p>
+    </div>
   </article>
 </section>
