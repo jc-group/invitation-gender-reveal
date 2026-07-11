@@ -1,0 +1,22 @@
+{
+  "name": "Gender Reveal de Catherine & Josafat",
+  "short_name": "Gender Reveal",
+  "description": "Invitación al Gender Reveal de Catherine & Josafat.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efe8d8",
+  "theme_color": "#efe8d8",
+  "lang": "es-MX",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
