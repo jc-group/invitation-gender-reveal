@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://invitation-gender-reveal.vercel.app/sitemap.xml

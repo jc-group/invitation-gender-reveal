@@ -1,8 +1,53 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Seo from '../shared/components/Seo.astro';
 import InvitationPage from '../features/invitation/InvitationPage.astro';
+import { invitationSeo } from '../features/invitation/invitation.seo';
+
+const canonicalUrl = invitationSeo.siteUrl;
+const absoluteImageUrl = new URL(invitationSeo.image, invitationSeo.siteUrl).toString();
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: 'Gender Reveal de Catherine & Josafat',
+  description: invitationSeo.description,
+  startDate: '2026-07-25T17:00:00-06:00',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  eventStatus: 'https://schema.org/EventScheduled',
+  image: [absoluteImageUrl],
+  location: {
+    '@type': 'Place',
+    name: 'Calle 22 #323',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'Calle 22 #323',
+      addressLocality: 'Saltillo',
+      addressRegion: 'Coahuila',
+      postalCode: '25016',
+      addressCountry: 'MX',
+    },
+  },
+  organizer: {
+    '@type': 'Person',
+    name: 'Catherine & Josafat',
+  },
+};
 ---
 
 <Layout>
-	<InvitationPage />
+  <Seo
+    slot="head"
+    title={invitationSeo.title}
+    description={invitationSeo.description}
+    canonicalUrl={canonicalUrl}
+    imageUrl={absoluteImageUrl}
+    imageAlt={invitationSeo.imageAlt}
+    locale={invitationSeo.locale}
+    type={invitationSeo.type}
+    robots={invitationSeo.robots}
+    jsonLd={jsonLd}
+  />
+
+  <InvitationPage />
 </Layout>

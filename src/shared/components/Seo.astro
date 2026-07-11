@@ -1,0 +1,75 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  locale?: string;
+  type?: string;
+  robots?: string;
+  jsonLd?: object;
+}
+
+const {
+  title,
+  description,
+  canonicalUrl,
+  imageUrl,
+  imageAlt,
+  locale = 'es_MX',
+  type = 'website',
+  robots = 'index, follow',
+  jsonLd,
+} = Astro.props;
+
+const absoluteImageUrl = imageUrl?.startsWith('http')
+  ? imageUrl
+  : imageUrl?.startsWith('/')
+    ? new URL(imageUrl, Astro.site ?? canonicalUrl).toString()
+    : undefined;
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<meta name="robots" content={robots} />
+<link rel="canonical" href={canonicalUrl} />
+
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:locale" content={locale} />
+{absoluteImageUrl && (
+  <>
+    <meta property="og:image" content={absoluteImageUrl} />
+    <meta property="og:image:alt" content={imageAlt ?? title} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+  </>
+)}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+{absoluteImageUrl && (
+  <>
+    <meta name="twitter:image" content={absoluteImageUrl} />
+    <meta name="twitter:image:alt" content={imageAlt ?? title} />
+  </>
+)}
+
+<meta name="theme-color" content="#efe8d8" />
+<meta name="color-scheme" content="light" />
+
+{jsonLd && (
+  <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+)}
+
+<link rel="icon" href="/favicon.ico?v=3" sizes="any" />
+<link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=3" />
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=3" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3" />
+<link rel="manifest" href="/site.webmanifest?v=3" />
+<link rel="mask-icon" href="/mask-icon.svg?v=3" color="#8d6a54" />
