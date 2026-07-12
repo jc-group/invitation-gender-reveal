@@ -25,63 +25,109 @@ const audioSrc = '/assets/invitation/audio/background-music.mp3';
 
 <script is:inline>
   (function() {
+    var MUSIC_SESSION_KEY = 'genderRevealMusicStarted';
+
     var audio = document.querySelector('[data-music-audio]');
     var toggleButton = document.querySelector('[data-music-toggle]');
     var label = document.querySelector('[data-music-label]');
 
-    if (audio && toggleButton && label) {
-      var isPlaying = false;
+    if (!audio || !toggleButton || !label) return;
 
-      var updateUi = function() {
-        toggleButton.classList.toggle('is-playing', isPlaying);
-        toggleButton.setAttribute(
-          'aria-label',
-          isPlaying ? 'Pausar música' : 'Activar música'
-        );
-        label.textContent = isPlaying ? 'Pausar' : 'Música';
-      };
+    var isPlaying = false;
 
-      var playAudio = async function() {
-        try {
-          audio.volume = 0.55;
-          await audio.play();
-          isPlaying = true;
-          updateUi();
-        } catch (e) {
-          isPlaying = false;
-          updateUi();
-        }
-      };
+    function safeSessionGet(key) {
+      try {
+        return window.sessionStorage.getItem(key);
+      } catch {
+        return null;
+      }
+    }
 
-      var pauseAudio = function() {
-        audio.pause();
-        isPlaying = false;
-        updateUi();
-      };
+    function safeSessionSet(key, value) {
+      try {
+        window.sessionStorage.setItem(key, value);
+      } catch {}
+    }
 
-      toggleButton.addEventListener('click', async function() {
-        if (isPlaying) {
-          pauseAudio();
-          return;
-        }
-        await playAudio();
-      });
+    function safeSessionRemove(key) {
+      try {
+        window.sessionStorage.removeItem(key);
+      } catch {}
+    }
 
-      window.addEventListener(
-        'pointerdown',
-        async function() {
-          if (!isPlaying) {
-            await playAudio();
-          }
-        },
-        { once: true, passive: true }
+    function updateUi() {
+      toggleButton.classList.toggle('is-playing', isPlaying);
+      toggleButton.setAttribute(
+        'aria-label',
+        isPlaying ? 'Pausar música' : 'Activar música'
       );
+      label.textContent = isPlaying ? 'Pausar' : 'Música';
+    }
 
-      window.addEventListener('DOMContentLoaded', async function() {
-        await playAudio();
-      });
-
+    function updateButtonState(playing) {
+      isPlaying = playing;
       updateUi();
     }
+
+    function removeUnlockListeners() {
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    }
+
+    async function tryPlayMusic() {
+      try {
+        audio.volume = 0.55;
+        await audio.play();
+        safeSessionSet(MUSIC_SESSION_KEY, 'true');
+        updateButtonState(true);
+        removeUnlockListeners();
+        return true;
+      } catch (err) {
+        updateButtonState(false);
+        return false;
+      }
+    }
+
+    function handleFirstInteraction() {
+      tryPlayMusic();
+    }
+
+    function addUnlockListeners() {
+      var options = { once: true, passive: true };
+      window.addEventListener('pointerdown', handleFirstInteraction, options);
+      window.addEventListener('touchstart', handleFirstInteraction, options);
+      window.addEventListener('keydown', handleFirstInteraction, options);
+    }
+
+    toggleButton.addEventListener('click', async function() {
+      if (isPlaying) {
+        audio.pause();
+        safeSessionRemove(MUSIC_SESSION_KEY);
+        updateButtonState(false);
+        return;
+      }
+
+      var started = await tryPlayMusic();
+      if (!started) {
+        addUnlockListeners();
+      }
+    });
+
+    audio.load();
+
+    var wasStarted = safeSessionGet(MUSIC_SESSION_KEY) === 'true';
+
+    if (wasStarted) {
+      tryPlayMusic();
+    } else {
+      tryPlayMusic().then(function(started) {
+        if (!started) {
+          addUnlockListeners();
+        }
+      });
+    }
+
+    updateUi();
   })();
 </script>
