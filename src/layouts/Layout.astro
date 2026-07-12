@@ -1,3 +1,11 @@
+---
+interface Props {
+  bodyClass?: string;
+}
+
+const { bodyClass = '' } = Astro.props;
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
@@ -6,7 +14,7 @@
 		<meta name="generator" content={Astro.generator} />
 		<slot name="head" />
 	</head>
-	<body>
+	<body class={bodyClass}>
 		<slot />
 	</body>
 </html>

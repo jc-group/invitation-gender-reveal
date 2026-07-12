@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Seo from '../shared/components/Seo.astro';
+import HostDashboard from '../features/invitation/components/HostDashboard.astro';
+import '../features/invitation/styles/invitation.css';
+
+const canonicalUrl = 'https://invitation-gender-reveal.vercel.app/anfitriones';
+---
+
+<Layout>
+  <Seo
+    slot="head"
+    title="Anfitriones | Gender Reveal de Catherine & Josafat"
+    description="Panel para revisar confirmaciones del Gender Reveal."
+    canonicalUrl={canonicalUrl}
+    robots="noindex, nofollow"
+  />
+
+  <HostDashboard />
+</Layout>

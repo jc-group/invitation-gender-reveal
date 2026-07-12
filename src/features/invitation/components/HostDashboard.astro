@@ -1,0 +1,419 @@
+---
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+---
+
+<section
+  class="host-dashboard"
+  data-host-dashboard
+  data-supabase-url={supabaseUrl}
+  data-supabase-anon-key={supabaseAnonKey}
+>
+  <div class="host-dashboard__card host-dashboard__gate" data-host-gate>
+    <p class="host-dashboard__eyebrow">Anfitriones</p>
+    <h1>Lista de invitados</h1>
+    <p>
+      Ingresa el código de anfitrión para revisar las confirmaciones.
+    </p>
+
+    <form class="host-dashboard__form" data-host-form>
+      <label>
+        Código de anfitrión
+        <input
+          type="password"
+          name="hostCode"
+          autocomplete="off"
+          placeholder="palabra-palabra-palabra"
+          required
+        />
+      </label>
+
+      <button type="submit">
+        Ver confirmaciones
+      </button>
+
+      <p class="host-dashboard__status" data-host-status aria-live="polite"></p>
+    </form>
+  </div>
+
+  <div class="host-dashboard__content" data-host-content hidden>
+    <header class="host-dashboard__header">
+      <div>
+        <p class="host-dashboard__eyebrow">Anfitriones</p>
+        <h1>Confirmaciones</h1>
+      </div>
+
+      <div class="host-dashboard__actions">
+        <button type="button" data-host-refresh>
+          Actualizar
+        </button>
+        <button type="button" data-host-logout>
+          Cerrar sesión
+        </button>
+      </div>
+    </header>
+
+    <section class="host-dashboard__summary" aria-label="Resumen de confirmaciones">
+      <article>
+        <span>Respuestas</span>
+        <strong data-host-total-responses>0</strong>
+      </article>
+      <article>
+        <span>Asistirán</span>
+        <strong data-host-attending>0</strong>
+      </article>
+      <article>
+        <span>Personas</span>
+        <strong data-host-guests>0</strong>
+      </article>
+      <article>
+        <span>No asistirán</span>
+        <strong data-host-not-attending>0</strong>
+      </article>
+      <article>
+        <span>Niña</span>
+        <strong data-host-girl-votes>0</strong>
+      </article>
+      <article>
+        <span>Niño</span>
+        <strong data-host-boy-votes>0</strong>
+      </article>
+    </section>
+
+    <div class="host-dashboard__filters" role="group" aria-label="Filtrar invitados">
+      <button type="button" data-host-filter="all" class="is-active">Todos</button>
+      <button type="button" data-host-filter="yes">Asisten</button>
+      <button type="button" data-host-filter="no">No asisten</button>
+    </div>
+
+    <label class="host-dashboard__search">
+      Buscar invitado
+      <input
+        type="search"
+        data-host-search
+        placeholder="Nombre, teléfono o mensaje"
+        autocomplete="off"
+      />
+    </label>
+
+    <div class="host-dashboard__table-wrap">
+      <table class="host-dashboard__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Asistencia</th>
+            <th>Personas</th>
+            <th>Predicción</th>
+            <th>Teléfono</th>
+            <th>Mensaje</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody data-host-guest-list>
+          <tr>
+            <td colspan="7">Sin datos todavía.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script is:inline>
+  (function() {
+    var root = document.querySelector('[data-host-dashboard]');
+    if (!root) return;
+
+    var supabaseUrl = root.getAttribute('data-supabase-url') || '';
+    var supabaseAnonKey = root.getAttribute('data-supabase-anon-key') || '';
+
+    var gate = root.querySelector('[data-host-gate]');
+    var content = root.querySelector('[data-host-content]');
+    var form = root.querySelector('[data-host-form]');
+    var statusEl = root.querySelector('[data-host-status]');
+    var refreshBtn = root.querySelector('[data-host-refresh]');
+    var logoutBtn = root.querySelector('[data-host-logout]');
+    var filterBtns = root.querySelectorAll('[data-host-filter]');
+    var searchInput = root.querySelector('[data-host-search]');
+    var guestList = root.querySelector('[data-host-guest-list]');
+
+    var totalResponsesEl = root.querySelector('[data-host-total-responses]');
+    var attendingEl = root.querySelector('[data-host-attending]');
+    var guestsEl = root.querySelector('[data-host-guests]');
+    var notAttendingEl = root.querySelector('[data-host-not-attending]');
+    var girlVotesEl = root.querySelector('[data-host-girl-votes]');
+    var boyVotesEl = root.querySelector('[data-host-boy-votes]');
+
+    var currentFilter = 'all';
+    var currentSearch = '';
+    var allGuests = [];
+    var hostCode = null;
+
+    function normalizeText(value) {
+      return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      var date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '-';
+      return new Intl.DateTimeFormat('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).format(date);
+    }
+
+    function formatAttendance(text) {
+      if (text === 'Sí asistiré') return 'Sí';
+      if (text === 'No podré asistir') return 'No';
+      return text || '-';
+    }
+
+    function callDashboardRpc(code) {
+      return fetch(supabaseUrl + '/rest/v1/rpc/get_host_rsvp_dashboard', {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: 'Bearer ' + supabaseAnonKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_host_code: code }),
+      }).then(function(response) {
+        if (!response.ok) {
+          throw new Error('Error de conexión');
+        }
+        return response.json();
+      });
+    }
+
+    function showStatus(message, isError) {
+      if (statusEl) {
+        statusEl.textContent = message;
+        statusEl.style.color = isError ? '#a15f5f' : '#5f7d4f';
+      }
+    }
+
+    function updateSummary(data) {
+      var summary = data && data.summary ? data.summary : {};
+      var responses = Number(summary.responses || 0);
+      var attending = Number(summary.attending_responses || 0);
+      var notAttending = Number(summary.not_attending_responses || 0);
+      var guests = Number(summary.attending_guests || 0);
+      var girlVotes = Number(summary.girl_votes || 0);
+      var boyVotes = Number(summary.boy_votes || 0);
+
+      if (totalResponsesEl) totalResponsesEl.textContent = String(responses);
+      if (attendingEl) attendingEl.textContent = String(attending);
+      if (guestsEl) guestsEl.textContent = String(guests);
+      if (notAttendingEl) notAttendingEl.textContent = String(notAttending);
+      if (girlVotesEl) girlVotesEl.textContent = String(girlVotes);
+      if (boyVotesEl) boyVotesEl.textContent = String(boyVotes);
+    }
+
+    function sanitize(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function createCell(text, column) {
+      var td = document.createElement('td');
+      td.setAttribute('data-column', column);
+      td.textContent = text;
+      return td;
+    }
+
+    function renderGuestRows(guests) {
+      if (!guestList) return;
+
+      if (!guests || guests.length === 0) {
+        var tr = document.createElement('tr');
+        var td = document.createElement('td');
+        td.setAttribute('colspan', '7');
+        td.textContent = 'No hay confirmaciones que coincidan con este filtro.';
+        tr.appendChild(td);
+        guestList.innerHTML = '';
+        guestList.appendChild(tr);
+        return;
+      }
+
+      guestList.innerHTML = '';
+
+      for (var i = 0; i < guests.length; i++) {
+        var g = guests[i];
+        var tr = document.createElement('tr');
+
+        tr.appendChild(createCell(g.name || '-', 'name'));
+        tr.appendChild(createCell(formatAttendance(g.attendance), 'attendance'));
+        tr.appendChild(createCell(String(g.guests || '-'), 'guests'));
+        tr.appendChild(createCell(g.prediction || '-', 'prediction'));
+        tr.appendChild(createCell(g.phone || '-', 'phone'));
+        tr.appendChild(createCell(g.message || '-', 'message'));
+        tr.appendChild(createCell(formatDate(g.created_at), 'date'));
+
+        guestList.appendChild(tr);
+      }
+    }
+
+    function filterGuests() {
+      var filtered = allGuests;
+
+      if (currentFilter === 'yes') {
+        filtered = filtered.filter(function(g) {
+          return g.attendance === 'Sí asistiré';
+        });
+      } else if (currentFilter === 'no') {
+        filtered = filtered.filter(function(g) {
+          return g.attendance === 'No podré asistir';
+        });
+      }
+
+      if (currentSearch) {
+        var searchNorm = normalizeText(currentSearch);
+        filtered = filtered.filter(function(g) {
+          return normalizeText(g.name).indexOf(searchNorm) !== -1 ||
+            normalizeText(g.phone).indexOf(searchNorm) !== -1 ||
+            normalizeText(g.message).indexOf(searchNorm) !== -1 ||
+            normalizeText(g.prediction).indexOf(searchNorm) !== -1 ||
+            normalizeText(g.attendance).indexOf(searchNorm) !== -1;
+        });
+      }
+
+      return filtered;
+    }
+
+    function updateFilterButtons() {
+      for (var j = 0; j < filterBtns.length; j++) {
+        var btn = filterBtns[j];
+        var f = btn.getAttribute('data-host-filter');
+        if (f === currentFilter) {
+          btn.classList.add('is-active');
+        } else {
+          btn.classList.remove('is-active');
+        }
+      }
+    }
+
+    function loadDashboard() {
+      if (!hostCode) return;
+
+      showStatus('Cargando...', false);
+
+      callDashboardRpc(hostCode).then(function(data) {
+        if (data && data.ok) {
+          allGuests = data.guests || [];
+          updateSummary(data);
+          updateFilterButtons();
+          renderGuestRows(filterGuests());
+
+          if (gate) gate.hidden = true;
+          if (content) content.hidden = false;
+        } else {
+          showStatus(data && data.message ? data.message : 'Código incorrecto.', true);
+        }
+      }).catch(function(err) {
+        showStatus('No se pudo cargar los datos.', true);
+      });
+    }
+
+    function logout() {
+      hostCode = null;
+      allGuests = [];
+      currentFilter = 'all';
+      currentSearch = '';
+
+      if (searchInput) searchInput.value = '';
+
+      if (guestList) {
+        guestList.innerHTML = '<tr><td colspan="7">Sin datos todavía.</td></tr>';
+      }
+
+      var summaryEls = [
+        totalResponsesEl,
+        attendingEl,
+        guestsEl,
+        notAttendingEl,
+        girlVotesEl,
+        boyVotesEl
+      ];
+      for (var m = 0; m < summaryEls.length; m++) {
+        if (summaryEls[m]) summaryEls[m].textContent = '0';
+      }
+
+      if (gate) gate.hidden = false;
+      if (content) content.hidden = true;
+
+      if (statusEl) {
+        statusEl.textContent = '';
+      }
+
+      var codeInput = form ? form.querySelector('input[name="hostCode"]') : null;
+      if (codeInput) codeInput.value = '';
+
+      for (var k = 0; k < filterBtns.length; k++) {
+        var btn = filterBtns[k];
+        var f = btn.getAttribute('data-host-filter');
+        if (f === 'all') {
+          btn.classList.add('is-active');
+        } else {
+          btn.classList.remove('is-active');
+        }
+      }
+    }
+
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var codeInput = form.querySelector('input[name="hostCode"]');
+        if (!codeInput) return;
+
+        var code = codeInput.value;
+        if (!code || !code.trim()) {
+          showStatus('Ingresa el código.', true);
+          return;
+        }
+
+        hostCode = code.trim();
+        loadDashboard();
+      });
+    }
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        loadDashboard();
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function() {
+        logout();
+      });
+    }
+
+    for (var k = 0; k < filterBtns.length; k++) {
+      filterBtns[k].addEventListener('click', function() {
+        var filter = this.getAttribute('data-host-filter');
+        currentFilter = filter;
+        updateFilterButtons();
+        renderGuestRows(filterGuests());
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function() {
+        currentSearch = this.value || '';
+        renderGuestRows(filterGuests());
+      });
+    }
+  })();
+</script>
