@@ -1,0 +1,82 @@
+<button class="scroll-cue" type="button" data-scroll-cue aria-label="Seguir bajando">
+  <span class="scroll-cue__text">Sigue bajando</span>
+  <span class="scroll-cue__icon" aria-hidden="true">↓</span>
+</button>
+
+<script is:inline>
+  (function() {
+    var scrollCue = document.querySelector('[data-scroll-cue]');
+    if (!scrollCue) return;
+
+    var RSVP_STORAGE_KEY = 'genderRevealRsvpSubmitted';
+
+    function hideCue() {
+      scrollCue.classList.remove('is-visible');
+    }
+
+    function showCue() {
+      scrollCue.classList.add('is-visible');
+    }
+
+    function shouldShowCue() {
+      var stored = null;
+      try {
+        var raw = window.localStorage.getItem(RSVP_STORAGE_KEY);
+        stored = raw ? JSON.parse(raw) : null;
+      } catch (e) {}
+      if (stored?.submitted) return false;
+
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      var scrollTop = window.scrollY || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight;
+      var threshold = docHeight - viewportHeight - 120;
+      if (scrollTop >= threshold) return false;
+
+      return true;
+    }
+
+    function scrollToNext() {
+      var targets = document.querySelectorAll('[data-scroll-reveal], #predicciones-en-vivo, .rsvp');
+      var scrollTop = window.scrollY || document.documentElement.scrollTop;
+      var found = null;
+
+      for (var i = 0; i < targets.length; i++) {
+        var rect = targets[i].getBoundingClientRect();
+        var absTop = rect.top + scrollTop;
+        if (absTop > scrollTop + 80) {
+          found = targets[i];
+          break;
+        }
+      }
+
+      if (found) {
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        found.scrollIntoView({
+          behavior: prefersReduced ? 'auto' : 'smooth',
+          block: 'start'
+        });
+      } else {
+        hideCue();
+      }
+    }
+
+    function checkCue() {
+      if (shouldShowCue()) {
+        showCue();
+      } else {
+        hideCue();
+      }
+    }
+
+    scrollCue.addEventListener('click', scrollToNext);
+
+    window.addEventListener('scroll', checkCue, { passive: true });
+    window.addEventListener('resize', checkCue, { passive: true });
+
+    window.addEventListener('rsvp:submitted', function() {
+      hideCue();
+    });
+
+    checkCue();
+  })();
+</script>

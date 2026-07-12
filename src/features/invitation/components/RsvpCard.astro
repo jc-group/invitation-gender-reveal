@@ -92,6 +92,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
         rows="3"
         placeholder="Déjanos un mensaje"
       ></textarea>
+      <span class="rsvp-form__hint">Si nos dejas un mensaje, podremos mostrarlo con cariño en la sección de Predicciones en vivo el día del evento.</span>
     </label>
 
     <button class="rsvp__button" type="submit" data-rsvp-submit>
@@ -110,6 +111,9 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
 <script is:inline>
   (function() {
+    var RSVP_STORAGE_KEY = 'genderRevealRsvpSubmitted';
+    var LIVE_VOTES_SELECTOR = '#predicciones-en-vivo';
+
     var form = document.querySelector('[data-rsvp-form]');
     var statusElement = document.querySelector('[data-rsvp-status]');
     var submitButton = document.querySelector('[data-rsvp-submit]');
@@ -120,8 +124,68 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
     var supabaseUrl = form.getAttribute('data-supabase-url');
     var supabaseAnonKey = form.getAttribute('data-supabase-anon-key');
 
+    function getStoredRsvp() {
+      try {
+        var raw = window.localStorage.getItem(RSVP_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setStoredRsvp(prediction) {
+      try {
+        window.localStorage.setItem(
+          RSVP_STORAGE_KEY,
+          JSON.stringify({
+            submitted: true,
+            submittedAt: new Date().toISOString(),
+            prediction: prediction
+          })
+        );
+      } catch (e) {}
+    }
+
+    function scrollToLiveVotes() {
+      var target = document.querySelector(LIVE_VOTES_SELECTOR);
+      if (!target) return;
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({
+        behavior: prefersReduced ? 'auto' : 'smooth',
+        block: 'start'
+      });
+    }
+
+    function showAlreadySubmitted() {
+      form.hidden = true;
+      resultElement.hidden = false;
+      resultElement.dataset.state = 'success';
+      resultElement.innerHTML =
+        '<span class="rsvp-result__sparkle" aria-hidden="true"></span>' +
+        '<strong>Ya registramos tu respuesta</strong>' +
+        '<span>Desde este dispositivo ya se envio una confirmacion. Puedes revisar como van las predicciones en vivo.</span>' +
+        '<button class="rsvp-result__link" type="button" data-scroll-live-votes>Ver predicciones en vivo</button>';
+      var liveVotesButton = resultElement.querySelector('[data-scroll-live-votes]');
+      if (liveVotesButton) {
+        liveVotesButton.addEventListener('click', scrollToLiveVotes);
+      }
+    }
+
+    var storedRsvp = getStoredRsvp();
+    if (storedRsvp?.submitted) {
+      showAlreadySubmitted();
+      return;
+    }
+
     form.addEventListener('submit', async function(event) {
       event.preventDefault();
+
+      if (getStoredRsvp()?.submitted) {
+        statusElement.textContent = 'Desde este dispositivo ya se envio una confirmacion.';
+        statusElement.dataset.state = 'error';
+        scrollToLiveVotes();
+        return;
+      }
 
       if (!supabaseUrl || !supabaseAnonKey) {
         statusElement.textContent = 'Falta configurar Supabase.';
@@ -144,13 +208,13 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
       var guestsValue = Number(guests);
       if (!Number.isInteger(guestsValue) || guestsValue < 1 || guestsValue > 10) {
-        statusElement.textContent = 'El número de personas debe estar entre 1 y 10.';
+        statusElement.textContent = 'El numero de personas debe estar entre 1 y 10.';
         statusElement.dataset.state = 'error';
         return;
       }
 
       submitButton.disabled = true;
-      statusElement.textContent = 'Guardando confirmación...';
+      statusElement.textContent = 'Guardando confirmacion...';
       statusElement.dataset.state = 'loading';
 
       try {
@@ -179,10 +243,14 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
           throw new Error('Supabase error ' + response.status);
         }
 
+        setStoredRsvp(prediction);
+
         form.reset();
         form.hidden = true;
         resultElement.hidden = false;
         window.dispatchEvent(new CustomEvent('rsvp:submitted'));
+
+        window.setTimeout(scrollToLiveVotes, 350);
       } catch (err) {
         console.error(err);
         statusElement.textContent = 'No se pudo guardar. Intenta de nuevo.';
