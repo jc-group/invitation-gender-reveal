@@ -4,6 +4,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 ---
 
 <section
+  id="predicciones-en-vivo"
   class="live-votes scroll-reveal"
   data-scroll-reveal
   data-live-votes
@@ -14,31 +15,33 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
   <p class="live-votes__eyebrow">Predicciones en vivo</p>
 
   <h2 class="live-votes__title">
-    ¿Qué crees que será?
+    Que crees que sera?
   </h2>
 
   <div class="live-votes__row">
     <div class="live-votes__avatar live-votes__avatar--girl">
       <img
         src="/assets/invitation/votes/girl.png"
-        alt="Predicción niña"
+        alt="Prediccion nina"
+        width="666"
+        height="375"
         loading="lazy"
         decoding="async"
         onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
       />
-      <span hidden>Niña</span>
+      <span hidden>Nina</span>
     </div>
 
     <div class="live-votes__content">
       <div class="live-votes__labels">
-        <span><strong data-live-girl-percent>50%</strong> Niña</span>
-        <span><strong data-live-boy-percent>50%</strong> Niño</span>
+        <span><strong data-live-girl-percent>50%</strong> Nina</span>
+        <span><strong data-live-boy-percent>50%</strong> Nino</span>
       </div>
 
       <div
         class="live-votes__bar"
         role="img"
-        aria-label="Porcentaje de votos para niña y niño"
+        aria-label="Porcentaje de votos para nina y nino"
       >
         <div class="live-votes__fill live-votes__fill--girl" data-live-girl-fill></div>
         <div class="live-votes__fill live-votes__fill--boy" data-live-boy-fill></div>
@@ -52,12 +55,14 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
     <div class="live-votes__avatar live-votes__avatar--boy">
       <img
         src="/assets/invitation/votes/boy.png"
-        alt="Predicción niño"
+        alt="Prediccion nino"
+        width="666"
+        height="375"
         loading="lazy"
         decoding="async"
         onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
       />
-      <span hidden>Niño</span>
+      <span hidden>Nino</span>
     </div>
   </div>
 </section>
