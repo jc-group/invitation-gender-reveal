@@ -1,0 +1,26 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Seo from '../shared/components/Seo.astro';
+import LiveDisplay from '../features/invitation/components/LiveDisplay.astro';
+import '../features/invitation/styles/invitation.css';
+
+const title = 'Predicciones en vivo | Gender Reveal de Catherine & Josafat';
+const description = 'Pantalla de predicciones y mensajes en vivo para el Gender Reveal de Catherine & Josafat.';
+const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
+---
+
+<Layout bodyClass="live-display-page">
+  <Seo
+    slot="head"
+    title={title}
+    description={description}
+    canonicalUrl={siteUrl + '/pantalla'}
+    imageUrl=""
+    imageAlt=""
+    locale="es-MX"
+    type="website"
+    robots="noindex, nofollow"
+  />
+
+  <LiveDisplay />
+</Layout>

@@ -1,0 +1,344 @@
+---
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+---
+
+<section
+  class="live-display"
+  data-live-display
+  data-supabase-url={supabaseUrl}
+  data-supabase-anon-key={supabaseAnonKey}
+>
+  <div class="live-display__background" aria-hidden="true"></div>
+
+  <div class="live-display__decorations" aria-hidden="true">
+    <img
+      class="live-display__asset live-display__asset--moon"
+      src="/assets/invitation/watercolor/moon-bunny.png"
+      alt=""
+      width="677"
+      height="369"
+      loading="eager"
+      decoding="async"
+      fetchpriority="high"
+    />
+    <img
+      class="live-display__asset live-display__asset--star"
+      src="/assets/invitation/watercolor/shooting-star.png"
+      alt=""
+      width="677"
+      height="369"
+      loading="eager"
+      decoding="async"
+    />
+    <img
+      class="live-display__asset live-display__asset--stars"
+      src="/assets/invitation/watercolor/stars.png"
+      alt=""
+      width="677"
+      height="369"
+      loading="eager"
+      decoding="async"
+    />
+    <img
+      class="live-display__asset live-display__asset--cloud-left"
+      src="/assets/invitation/watercolor/cloud-left.png"
+      alt=""
+      width="677"
+      height="369"
+      loading="eager"
+      decoding="async"
+    />
+    <img
+      class="live-display__asset live-display__asset--rainbow"
+      src="/assets/invitation/watercolor/rainbow-bunny.png"
+      alt=""
+      width="677"
+      height="369"
+      loading="eager"
+      decoding="async"
+    />
+  </div>
+
+  <header class="live-display__header">
+    <p class="live-display__eyebrow">Gender Reveal</p>
+    <h1>Predicciones en vivo</h1>
+    <p>Catherine & Josafat</p>
+  </header>
+
+  <main class="live-display__main">
+    <section class="live-display__votes" aria-label="Resultado de predicciones">
+      <article class="live-display__side live-display__side--girl">
+        <img
+          class="live-display__vote-image"
+          src="/assets/invitation/votes/girl.png"
+          alt="Predicción niña"
+          width="666"
+          height="375"
+          loading="eager"
+          decoding="async"
+        />
+        <span class="live-display__label">Niña</span>
+        <strong data-display-girl-percent>0%</strong>
+        <small data-display-girl-votes>0 votos</small>
+      </article>
+
+      <div class="live-display__meter" aria-hidden="true">
+        <div class="live-display__meter-fill live-display__meter-fill--girl" data-display-girl-fill></div>
+        <div class="live-display__meter-fill live-display__meter-fill--boy" data-display-boy-fill></div>
+      </div>
+
+      <article class="live-display__side live-display__side--boy">
+        <img
+          class="live-display__vote-image"
+          src="/assets/invitation/votes/boy.png"
+          alt="Predicción niño"
+          width="666"
+          height="375"
+          loading="eager"
+          decoding="async"
+        />
+        <span class="live-display__label">Niño</span>
+        <strong data-display-boy-percent>0%</strong>
+        <small data-display-boy-votes>0 votos</small>
+      </article>
+    </section>
+
+    <p class="live-display__total" data-display-total-text>
+      0 votos registrados
+    </p>
+
+    <section class="live-display__messages" aria-label="Mensajes de invitados">
+      <div class="live-display__messages-header">
+        <p class="live-display__messages-title">Mensajes de los invitados</p>
+        <p class="live-display__message-count" data-display-message-count>0 / 0</p>
+      </div>
+
+      <article class="live-display__message-card" data-display-message-card>
+        <blockquote data-display-message>
+          Los mensajes aparecerán aquí durante el evento.
+        </blockquote>
+        <footer>
+          <span data-display-message-name>Catherine & Josafat</span>
+          <span data-display-message-prediction></span>
+        </footer>
+      </article>
+    </section>
+  </main>
+
+  <footer class="live-display__footer">
+    <span>Actualizando en vivo</span>
+    <span data-display-updated>Esperando datos...</span>
+  </footer>
+</section>
+
+<script is:inline>
+  (function() {
+    var root = document.querySelector('[data-live-display]');
+    if (!root) return;
+
+    var supabaseUrl = root.getAttribute('data-supabase-url') || '';
+    var supabaseAnonKey = root.getAttribute('data-supabase-anon-key') || '';
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      var updatedElement = root.querySelector('[data-display-updated]');
+      if (updatedElement) {
+        updatedElement.textContent = 'Falta configurar Supabase.';
+      }
+      return;
+    }
+
+    var messages = [];
+    var messageIndex = 0;
+
+    function callRpc(functionName) {
+      return fetch(supabaseUrl + '/rest/v1/rpc/' + functionName, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: 'Bearer ' + supabaseAnonKey,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      }).then(function(response) {
+        if (!response.ok) {
+          throw new Error('RPC ' + functionName + ' failed');
+        }
+        return response.json();
+      });
+    }
+
+    function formatVoteText(count) {
+      var n = Number(count);
+      return n === 1 ? '1 voto' : n + ' votos';
+    }
+
+    function formatRegisteredVotes(count) {
+      var n = Number(count);
+      return n === 1 ? '1 voto registrado' : n + ' votos registrados';
+    }
+
+    function updateVotes(data) {
+      var payload = Array.isArray(data) ? data[0] : data;
+
+      var girlVotes = Number(payload && payload.girl_votes ? payload.girl_votes : 0);
+      var boyVotes = Number(payload && payload.boy_votes ? payload.boy_votes : 0);
+      var totalVotes = Number(payload && payload.total_votes ? payload.total_votes : girlVotes + boyVotes);
+
+      var girlPercent = totalVotes > 0 ? Math.round((girlVotes / totalVotes) * 100) : 0;
+      var boyPercent = totalVotes > 0 ? 100 - girlPercent : 0;
+
+      var girlPercentEl = root.querySelector('[data-display-girl-percent]');
+      var boyPercentEl = root.querySelector('[data-display-boy-percent]');
+      var girlVotesEl = root.querySelector('[data-display-girl-votes]');
+      var boyVotesEl = root.querySelector('[data-display-boy-votes]');
+      var totalTextEl = root.querySelector('[data-display-total-text]');
+
+      if (girlPercentEl) girlPercentEl.textContent = girlPercent + '%';
+      if (boyPercentEl) boyPercentEl.textContent = boyPercent + '%';
+      if (girlVotesEl) girlVotesEl.textContent = formatVoteText(girlVotes);
+      if (boyVotesEl) boyVotesEl.textContent = formatVoteText(boyVotes);
+      if (totalTextEl) totalTextEl.textContent = formatRegisteredVotes(totalVotes);
+
+      var girlFill = root.querySelector('[data-display-girl-fill]');
+      var boyFill = root.querySelector('[data-display-boy-fill]');
+
+      if (girlFill) girlFill.style.width = girlPercent + '%';
+      if (boyFill) boyFill.style.width = boyPercent + '%';
+    }
+
+    function updateMessages(data) {
+      var rawMessages = Array.isArray(data) ? data : [];
+      messages = rawMessages.filter(function(item) {
+        return item && item.message && item.message.trim && item.message.trim();
+      });
+
+      if (messageIndex >= messages.length) {
+        messageIndex = 0;
+      }
+
+      renderMessage();
+    }
+
+    function fitMessageText() {
+      var messageEl = root.querySelector('[data-display-message]');
+      var card = root.querySelector('[data-display-message-card]');
+
+      if (!messageEl || !card) return;
+
+      messageEl.style.fontSize = '';
+
+      var maxSize = Number.parseFloat(
+        window.getComputedStyle(messageEl).fontSize
+      );
+
+      var minSize = Math.max(18, window.innerHeight * 0.022);
+
+      var currentSize = maxSize;
+      var attempts = 0;
+
+      while (
+        attempts < 24 &&
+        currentSize > minSize &&
+        (
+          messageEl.scrollHeight > messageEl.clientHeight ||
+          messageEl.scrollWidth > messageEl.clientWidth ||
+          card.scrollHeight > card.clientHeight
+        )
+      ) {
+        currentSize -= 2;
+        messageEl.style.fontSize = currentSize + 'px';
+        attempts += 1;
+      }
+    }
+
+    function renderMessage() {
+      var messageEl = root.querySelector('[data-display-message]');
+      var nameEl = root.querySelector('[data-display-message-name]');
+      var predictionEl = root.querySelector('[data-display-message-prediction]');
+      var countEl = root.querySelector('[data-display-message-count]');
+      var card = root.querySelector('[data-display-message-card]');
+
+      if (!messageEl || !nameEl || !predictionEl) return;
+
+      if (countEl) {
+        countEl.textContent = messages.length > 0
+          ? (messageIndex + 1) + ' / ' + messages.length
+          : '0 / 0';
+      }
+
+      if (card) {
+        card.classList.add('is-changing');
+      }
+
+      if (!messages.length) {
+        messageEl.textContent = 'Los mensajes aparecerán aquí durante el evento.';
+        nameEl.textContent = 'Catherine & Josafat';
+        predictionEl.textContent = '';
+        window.requestAnimationFrame(fitMessageText);
+        if (card) {
+          window.setTimeout(function() {
+            card.classList.remove('is-changing');
+          }, 180);
+        }
+        return;
+      }
+
+      var current = messages[messageIndex];
+      if (!current) return;
+
+      messageEl.textContent = '"' + String(current.message || '').trim() + '"';
+      nameEl.textContent = String(current.name || 'Invitado').trim();
+      predictionEl.textContent = current.prediction ? 'Predicción: ' + current.prediction : '';
+
+      window.requestAnimationFrame(fitMessageText);
+
+      if (card) {
+        window.setTimeout(function() {
+          card.classList.remove('is-changing');
+        }, 180);
+      }
+    }
+
+    function rotateMessage() {
+      if (!messages.length) return;
+      messageIndex = (messageIndex + 1) % messages.length;
+      renderMessage();
+    }
+
+    function updateTimestamp() {
+      var updatedEl = root.querySelector('[data-display-updated]');
+      if (!updatedEl) return;
+
+      var now = new Date();
+      var time = now.toLocaleTimeString('es-MX', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      updatedEl.textContent = 'Última actualización: ' + time;
+    }
+
+    function refreshDisplay() {
+      Promise.all([
+        callRpc('get_rsvp_vote_counts'),
+        callRpc('get_rsvp_live_messages'),
+      ]).then(function(results) {
+        updateVotes(results[0]);
+        updateMessages(results[1]);
+        updateTimestamp();
+      }).catch(function(error) {
+        var updatedEl = root.querySelector('[data-display-updated]');
+        if (updatedEl) {
+          updatedEl.textContent = 'No pudimos actualizar los datos por ahora.';
+        }
+      });
+    }
+
+    refreshDisplay();
+    window.setInterval(refreshDisplay, 10000);
+    window.setInterval(rotateMessage, 8000);
+    window.addEventListener('resize', function() {
+      window.requestAnimationFrame(fitMessageText);
+    });
+  })();
+</script>
