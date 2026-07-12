@@ -10,7 +10,7 @@ export const invitation: Invitation = {
   day: "25",
   date: "Sábado 25 de julio del 2026",
   time: "3:00 PM",
-  eventDateIso: "2026-07-25T17:00:00-06:00",
+  eventDateIso: "2026-07-25T15:00:00-06:00",
   place: {
     name: "Calle 22 #323",
     address: "Gaspar Valdez, 25016 Saltillo, Coah.",
@@ -19,7 +19,7 @@ export const invitation: Invitation = {
   dressCode: "Ven vestido de rosa o azul según tu predicción.",
   gift: {
     eyebrow: "Regalito sugerido",
-    intro: "Tu compañía es el mejor regalo. Si deseas traer un detallito, te dejamos algunas ideas según tu predicción: si crees que será niño, pañales de recién nacido; si crees que será niña, toallitas húmedas.",
+    intro: "Tu compañía es el mejor regalo. Si deseas traer un detallito, te dejamos algunas ideas según tu predicción: si crees que será niño, pañales; si crees que será niña, toallitas húmedas.",
     closing: "Lo importante es compartir este momento contigo.",
   },
   rsvp: {
