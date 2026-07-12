@@ -163,7 +163,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
       resultElement.innerHTML =
         '<span class="rsvp-result__sparkle" aria-hidden="true"></span>' +
         '<strong>Ya registramos tu respuesta</strong>' +
-        '<span>Desde este dispositivo ya se envio una confirmacion. Puedes revisar como van las predicciones en vivo.</span>' +
+        '<span>Desde este dispositivo ya se envió una confirmación. Puedes revisar cómo van las predicciones en vivo.</span>' +
         '<button class="rsvp-result__link" type="button" data-scroll-live-votes>Ver predicciones en vivo</button>';
       var liveVotesButton = resultElement.querySelector('[data-scroll-live-votes]');
       if (liveVotesButton) {
@@ -181,7 +181,7 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
       event.preventDefault();
 
       if (getStoredRsvp()?.submitted) {
-        statusElement.textContent = 'Desde este dispositivo ya se envio una confirmacion.';
+        statusElement.textContent = 'Desde este dispositivo ya se envió una confirmación.';
         statusElement.dataset.state = 'error';
         scrollToLiveVotes();
         return;
@@ -208,13 +208,13 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 
       var guestsValue = Number(guests);
       if (!Number.isInteger(guestsValue) || guestsValue < 1 || guestsValue > 10) {
-        statusElement.textContent = 'El numero de personas debe estar entre 1 y 10.';
+        statusElement.textContent = 'El número de personas debe estar entre 1 y 10.';
         statusElement.dataset.state = 'error';
         return;
       }
 
       submitButton.disabled = true;
-      statusElement.textContent = 'Guardando confirmacion...';
+        statusElement.textContent = 'Guardando confirmación...';
       statusElement.dataset.state = 'loading';
 
       try {
