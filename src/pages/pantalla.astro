@@ -2,11 +2,16 @@
 import Layout from '../layouts/Layout.astro';
 import Seo from '../shared/components/Seo.astro';
 import LiveDisplay from '../features/invitation/components/LiveDisplay.astro';
+import { getDefaultDemoEvent } from '../lib/events/demo-events';
 import '../features/invitation/styles/invitation.css';
 
 const title = 'Predicciones en vivo | Gender Reveal de Catherine & Josafat';
 const description = 'Pantalla de predicciones y mensajes en vivo para el Gender Reveal de Catherine & Josafat.';
-const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
+const appUrl = (import.meta.env.PUBLIC_APP_URL || 'https://invitation-gender-reveal.vercel.app').replace(/\/$/, '');
+const publicShareBaseUrl = 'https://invitation-gender-reveal.vercel.app';
+const eventConfig = getDefaultDemoEvent();
+const uploadPath = `/${eventConfig.routeSlug}/upload`;
+const uploadUrl = `${publicShareBaseUrl}${uploadPath}`;
 ---
 
 <Layout bodyClass="live-display-page">
@@ -14,7 +19,7 @@ const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
     slot="head"
     title={title}
     description={description}
-    canonicalUrl={siteUrl + '/pantalla'}
+    canonicalUrl={appUrl + '/pantalla'}
     imageUrl=""
     imageAlt=""
     locale="es-MX"
@@ -22,5 +27,5 @@ const siteUrl = import.meta.env.SITE_URL || 'http://localhost:4321';
     robots="noindex, nofollow"
   />
 
-  <LiveDisplay />
+  <LiveDisplay routeSlug={eventConfig.routeSlug} uploadUrl={uploadUrl} uploadPath={uploadPath} />
 </Layout>

@@ -1,4 +1,14 @@
 ---
+import PhotoCarousel from '../../../components/photos/PhotoCarousel.astro';
+
+interface Props {
+  routeSlug: string;
+  uploadUrl: string;
+  uploadPath: string;
+}
+
+const { routeSlug, uploadUrl, uploadPath } = Astro.props;
+
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
 ---
@@ -108,21 +118,25 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
       0 votos registrados
     </p>
 
-    <section class="live-display__messages" aria-label="Mensajes de invitados">
-      <div class="live-display__messages-header">
-        <p class="live-display__messages-title">Mensajes de los invitados</p>
-        <p class="live-display__message-count" data-display-message-count>0 / 0</p>
-      </div>
+    <section class="live-display__bottom-grid" aria-label="Mensajes y fotos de invitados">
+      <section class="live-display__messages" aria-label="Mensajes de invitados">
+        <article class="live-display__message-card" data-display-message-card>
+          <div class="live-display__messages-header live-display__messages-header--inside">
+            <p class="live-display__messages-title">Mensajes de los invitados</p>
+            <p class="live-display__message-count" data-display-message-count>0 / 0</p>
+          </div>
 
-      <article class="live-display__message-card" data-display-message-card>
-        <blockquote data-display-message>
-          Los mensajes aparecerán aquí durante el evento.
-        </blockquote>
-        <footer>
-          <span data-display-message-name>Catherine & Josafat</span>
-          <span data-display-message-prediction></span>
-        </footer>
-      </article>
+          <blockquote data-display-message>
+            Los mensajes aparecerán aquí durante el evento.
+          </blockquote>
+          <footer>
+            <span data-display-message-name>Catherine & Josafat</span>
+            <span data-display-message-prediction></span>
+          </footer>
+        </article>
+      </section>
+
+      <PhotoCarousel routeSlug={routeSlug} uploadUrl={uploadUrl} uploadPath={uploadPath} />
     </section>
   </main>
 

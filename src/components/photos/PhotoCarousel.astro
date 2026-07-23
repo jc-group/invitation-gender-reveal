@@ -1,0 +1,302 @@
+---
+import QRCode from 'qrcode';
+
+interface Props {
+  routeSlug: string;
+  uploadUrl: string;
+  uploadPath?: string;
+}
+
+const { routeSlug, uploadUrl, uploadPath = '/pantalla/upload' } = Astro.props;
+
+const qrCodeDataUrl = await QRCode.toDataURL(uploadUrl, {
+  margin: 2,
+  width: 220,
+  color: {
+    dark: '#6f5646',
+    light: '#fffaf0',
+  },
+});
+---
+
+<section class="live-display__photos" data-photo-carousel data-route-slug={routeSlug} data-upload-url={uploadUrl}>
+  <article class="live-display__photo-card">
+    <div class="live-display__photo-card-grid">
+      <section class="live-display__photo-share" aria-label="Comparte tus fotos">
+        <div class="live-display__share-header">
+          <p class="live-display__messages-title">Comparte tus fotos</p>
+        </div>
+
+        <img src={qrCodeDataUrl} alt="Código QR para abrir el formulario de fotos" loading="lazy" decoding="async" />
+
+        <p class="live-display__photo-qr-subtitle">Escanea desde tu celular</p>
+        <a href={uploadPath}>Abrir formulario</a>
+      </section>
+
+      <section class="live-display__photo-gallery" aria-label="Fotos de invitados">
+        <div class="live-display__photos-header">
+          <p class="live-display__messages-title">Fotos de invitados</p>
+          <p class="live-display__message-count" data-photo-counter hidden></p>
+        </div>
+
+        <div class="live-display__photo-stage">
+          <article class="live-display__photo-empty" data-photo-empty>
+            <h3>Aún no hay fotos</h3>
+            <p>Escanea el código para compartir la primera.</p>
+          </article>
+
+          <figure class="live-display__photo-frame" data-photo-frame hidden>
+            <button type="button" class="live-display__photo-nav live-display__photo-nav--prev" data-photo-prev aria-label="Foto anterior">←</button>
+            <button type="button" class="live-display__photo-trigger" data-photo-open-lightbox aria-label="Abrir foto en grande">
+              <img data-photo-image src="" alt="" loading="lazy" decoding="async" />
+            </button>
+            <figcaption class="live-display__photo-caption">
+              <p data-photo-name></p>
+              <p data-photo-message></p>
+            </figcaption>
+            <button type="button" class="live-display__photo-nav live-display__photo-nav--next" data-photo-next aria-label="Foto siguiente">→</button>
+          </figure>
+        </div>
+      </section>
+    </div>
+  </article>
+
+  <p class="live-display__photo-status" data-photo-status aria-live="polite"></p>
+
+  <dialog class="live-display__photo-lightbox" data-photo-lightbox>
+    <button type="button" data-photo-lightbox-close aria-label="Cerrar imagen">×</button>
+    <img src="" alt="" data-photo-lightbox-image />
+  </dialog>
+</section>
+
+<script>
+  import { fetchEventPhotos } from '../../lib/photos/photo-api';
+  import {
+    getCarouselUiState,
+    nextCarouselIndex,
+    previousCarouselIndex,
+    reconcileCarouselIndex,
+  } from '../../lib/photos/carousel-state';
+
+  const roots = document.querySelectorAll('[data-photo-carousel]');
+
+  roots.forEach((rootElement) => {
+    const root = rootElement as HTMLElement;
+    const routeSlug = root.dataset.routeSlug || 'pantalla';
+    const frame = root.querySelector('[data-photo-frame]') as HTMLElement | null;
+    const empty = root.querySelector('[data-photo-empty]') as HTMLElement | null;
+    const image = root.querySelector('[data-photo-image]') as HTMLImageElement | null;
+    const name = root.querySelector('[data-photo-name]') as HTMLElement | null;
+    const message = root.querySelector('[data-photo-message]') as HTMLElement | null;
+    const counter = root.querySelector('[data-photo-counter]') as HTMLElement | null;
+    const status = root.querySelector('[data-photo-status]') as HTMLElement | null;
+    const previousButton = root.querySelector('[data-photo-prev]') as HTMLButtonElement | null;
+    const nextButton = root.querySelector('[data-photo-next]') as HTMLButtonElement | null;
+    const openLightboxButton = root.querySelector('[data-photo-open-lightbox]') as HTMLButtonElement | null;
+    const lightbox = root.querySelector('[data-photo-lightbox]') as HTMLDialogElement | null;
+    const lightboxImage = root.querySelector('[data-photo-lightbox-image]') as HTMLImageElement | null;
+    const closeLightbox = root.querySelector('[data-photo-lightbox-close]') as HTMLButtonElement | null;
+
+    let photos: Array<{
+      id: string;
+      thumbnailUrl: string;
+      imageUrl: string;
+      guestName: string;
+      message: string;
+      createdAt: string;
+      alt?: string;
+    }> = [];
+
+    let currentIndex = 0;
+    let currentPhotoId: string | null = null;
+    let refreshTimer: number | null = null;
+    let autoplayTimer: number | null = null;
+    let isPaused = false;
+    let isFetching = false;
+    let touchStartX = 0;
+
+    function setStatus(text: string) {
+      if (!status) return;
+      status.textContent = text;
+    }
+
+    function updateCounter() {
+      if (!counter) return;
+
+      if (photos.length === 0) {
+        counter.hidden = true;
+        counter.textContent = '';
+        return;
+      }
+
+      counter.hidden = false;
+      counter.textContent = `${currentIndex + 1} / ${photos.length}`;
+    }
+
+    function renderCurrentPhoto() {
+      const uiState = getCarouselUiState(photos.length);
+
+      if (!frame || !empty || !image || !name || !message || !previousButton || !nextButton) {
+        return;
+      }
+
+      frame.hidden = uiState.isEmpty;
+      empty.hidden = !uiState.isEmpty;
+
+      if (uiState.isEmpty) {
+        frame.classList.remove('is-changing');
+        updateCounter();
+        return;
+      }
+
+      const current = photos[currentIndex];
+      if (!current) return;
+
+      currentPhotoId = current.id;
+
+      frame.classList.add('is-changing');
+      image.src = current.thumbnailUrl;
+      image.alt = current.alt || (current.guestName ? `Foto compartida por ${current.guestName}` : 'Foto compartida por un invitado');
+      name.textContent = current.guestName || 'Invitado';
+      message.textContent = current.message || '';
+      message.hidden = !current.message;
+
+      window.setTimeout(() => {
+        frame.classList.remove('is-changing');
+      }, 180);
+
+      previousButton.hidden = !uiState.canNavigate;
+      nextButton.hidden = !uiState.canNavigate;
+
+      updateCounter();
+    }
+
+    function goNext() {
+      currentIndex = nextCarouselIndex(currentIndex, photos.length);
+      renderCurrentPhoto();
+    }
+
+    function goPrevious() {
+      currentIndex = previousCarouselIndex(currentIndex, photos.length);
+      renderCurrentPhoto();
+    }
+
+    function restartAutoplay() {
+      if (autoplayTimer) {
+        window.clearInterval(autoplayTimer);
+        autoplayTimer = null;
+      }
+
+      if (photos.length <= 1 || isPaused) {
+        return;
+      }
+
+      autoplayTimer = window.setInterval(() => {
+        goNext();
+      }, 7000);
+    }
+
+    async function refreshPhotos() {
+      if (isFetching) return;
+
+      isFetching = true;
+
+      try {
+        const response = await fetchEventPhotos(routeSlug);
+        const incoming = Array.isArray(response.photos) ? response.photos : [];
+
+        currentIndex = reconcileCarouselIndex(currentPhotoId, incoming, currentIndex);
+        photos = incoming;
+
+        renderCurrentPhoto();
+        restartAutoplay();
+
+        if (response.failed && response.failed.length > 0) {
+          setStatus('Algunas fotos no pudieron mostrarse en este momento.');
+        } else {
+          setStatus('');
+        }
+      } catch {
+        photos = [];
+        currentPhotoId = null;
+        currentIndex = 0;
+        renderCurrentPhoto();
+        restartAutoplay();
+        setStatus('No pudimos cargar fotos por ahora. Reintentando...');
+      } finally {
+        isFetching = false;
+      }
+    }
+
+    previousButton?.addEventListener('click', () => {
+      goPrevious();
+      restartAutoplay();
+    });
+
+    nextButton?.addEventListener('click', () => {
+      goNext();
+      restartAutoplay();
+    });
+
+    root.addEventListener('mouseenter', () => {
+      isPaused = true;
+      restartAutoplay();
+    });
+
+    root.addEventListener('mouseleave', () => {
+      isPaused = false;
+      restartAutoplay();
+    });
+
+    root.addEventListener('touchstart', (event) => {
+      touchStartX = event.changedTouches[0]?.clientX ?? 0;
+    }, { passive: true });
+
+    root.addEventListener('touchend', (event) => {
+      const touchEndX = event.changedTouches[0]?.clientX ?? 0;
+      const delta = touchEndX - touchStartX;
+
+      if (Math.abs(delta) < 40) return;
+
+      if (delta < 0) {
+        goNext();
+      } else {
+        goPrevious();
+      }
+
+      restartAutoplay();
+    }, { passive: true });
+
+    openLightboxButton?.addEventListener('click', () => {
+      const current = photos[currentIndex];
+      if (!current || !lightbox || !lightboxImage) return;
+
+      lightboxImage.src = current.imageUrl;
+      lightboxImage.alt = current.alt || (current.guestName ? `Foto compartida por ${current.guestName}` : 'Foto compartida por un invitado');
+      lightbox.showModal();
+    });
+
+    closeLightbox?.addEventListener('click', () => {
+      lightbox?.close();
+    });
+
+    lightbox?.addEventListener('click', (event) => {
+      if (event.target === lightbox) {
+        lightbox.close();
+      }
+    });
+
+    refreshPhotos();
+    refreshTimer = window.setInterval(refreshPhotos, 8000);
+
+    window.addEventListener('beforeunload', () => {
+      if (refreshTimer) {
+        window.clearInterval(refreshTimer);
+      }
+
+      if (autoplayTimer) {
+        window.clearInterval(autoplayTimer);
+      }
+    }, { once: true });
+  });
+</script>
