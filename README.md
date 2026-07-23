@@ -1,46 +1,51 @@
-# Astro Starter Kit: Basics
+# Invitation Gender Reveal
+
+Invitacion web para un evento de gender reveal, construida con Astro.
+Incluye una pagina principal de invitacion, pantalla de predicciones en vivo y panel para anfitriones.
+
+## Requisitos
+
+- Node.js `>=22.12.0`
+- `pnpm`
+
+## Inicio rapido
+
+Desde la raiz del proyecto:
 
 ```sh
-pnpm create astro@latest -- --template basics
+pnpm install
+pnpm dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Comandos disponibles:
 
-## 🚀 Project Structure
+- `pnpm dev` inicia el servidor de desarrollo
+- `pnpm build` genera el sitio en `dist/`
+- `pnpm preview` sirve el build local
 
-Inside of your Astro project, you'll see the following folders and files:
+## Variables de entorno
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+Crea un archivo `.env` tomando `.env.example` como base:
+
+```env
+PUBLIC_SUPABASE_URL=
+PUBLIC_SUPABASE_ANON_KEY=
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+Estas variables habilitan el RSVP y las vistas de datos en vivo con Supabase.
 
-## 🧞 Commands
+## Rutas disponibles
 
-All commands are run from the root of the project, from a terminal:
+- `/` invitacion principal
+- `/pantalla` pantalla de predicciones en vivo
+- `/anfitriones` panel de confirmaciones para anfitriones
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+## Personalizacion rapida
 
-## 👀 Want to learn more?
+- `src/features/invitation/invitation.data.ts` textos del evento (titulo, fecha, lugar, copy)
+- `src/features/invitation/invitation.seo.ts` metadatos SEO y Open Graph
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Documentacion adicional
+
+- Configuracion de base de datos y RPC para RSVP: `src/features/invitation/supabase-rsvp.md`
+- Documentacion oficial de Astro: https://docs.astro.build
