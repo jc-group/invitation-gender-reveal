@@ -1,0 +1,659 @@
+---
+interface Props {
+  routeSlug: string;
+}
+
+const { routeSlug } = Astro.props;
+---
+
+<section class="photo-upload" data-photo-uploader data-route-slug={routeSlug}>
+  <header class="photo-upload__header">
+    <p class="photo-upload__eyebrow">Pantalla en vivo</p>
+    <h1>Comparte tus fotos</h1>
+    <p>Ayudanos a guardar los mejores momentos de este dia.</p>
+  </header>
+
+  <section class="photo-upload__actions" aria-label="Acciones para seleccionar fotos">
+    <button type="button" data-action-camera aria-label="Tomar foto">Tomar foto</button>
+    <button type="button" data-action-gallery aria-label="Elegir imagenes de galeria">Elegir de galeria</button>
+  </section>
+
+  <input
+    type="file"
+    data-camera-input
+    accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+    capture="environment"
+    hidden
+  />
+
+  <input
+    type="file"
+    data-gallery-input
+    accept="image/jpeg,image/png,image/webp,image/heic,image/heif"
+    multiple
+    hidden
+  />
+
+  <section class="photo-upload__dropzone" data-dropzone aria-label="Arrastra fotos aqui en escritorio">
+    <p>Arrastra y suelta tus fotos aqui</p>
+    <small>Tambien puedes usar los botones de arriba.</small>
+  </section>
+
+  <form class="photo-upload__meta" data-meta-form>
+    <label>
+      Tu nombre (opcional)
+      <input type="text" name="guestName" maxlength="80" autocomplete="name" placeholder="Ejemplo: Carlos" />
+    </label>
+
+    <label>
+      Mensaje (opcional)
+      <textarea name="message" maxlength="240" rows="3" placeholder="Muchas felicidades"></textarea>
+    </label>
+  </form>
+
+  <section class="photo-upload__preview" aria-label="Vista previa de fotos">
+    <h2>Vista previa</h2>
+    <div class="photo-upload__preview-grid" data-preview-list></div>
+  </section>
+
+  <div class="photo-upload__footer-actions">
+    <button type="button" data-upload-all disabled>Subir fotos</button>
+    <p class="photo-upload__status" data-upload-status aria-live="polite"></p>
+  </div>
+
+  <section class="photo-upload__owned" data-owned-section hidden>
+    <h2>Tus fotos</h2>
+    <div class="photo-upload__owned-grid" data-owned-list></div>
+  </section>
+
+  <dialog class="photo-upload__dialog" data-edit-dialog>
+    <form method="dialog" data-edit-form>
+      <h3>Editar foto</h3>
+      <label>
+        Nombre
+        <input type="text" name="guestName" maxlength="80" />
+      </label>
+      <label>
+        Mensaje
+        <textarea name="message" maxlength="240" rows="3"></textarea>
+      </label>
+      <menu>
+        <button value="cancel">Cancelar</button>
+        <button value="save">Guardar cambios</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <dialog class="photo-upload__dialog" data-delete-dialog>
+    <form method="dialog" data-delete-form>
+      <h3>Eliminar foto</h3>
+      <p>Esta accion no se puede deshacer.</p>
+      <menu>
+        <button value="cancel">Cancelar</button>
+        <button value="confirm">Eliminar</button>
+      </menu>
+    </form>
+  </dialog>
+</section>
+
+<script>
+  import { processImageFile } from '../../lib/photos/image-processing';
+  import {
+    MAX_UPLOAD_FILES,
+    validateUploadSelection,
+    sanitizeGuestMessage,
+    sanitizeGuestName,
+  } from '../../lib/photos/photo-validation';
+  import {
+    fetchEventPhotos,
+    uploadEventPhoto,
+    updateEventPhoto,
+    deleteEventPhoto,
+  } from '../../lib/photos/photo-api';
+  import {
+    buildOwnedPhotoIdsHeader,
+    readSessionPhotoIds,
+    registerSessionPhotoId,
+    removeSessionPhotoId,
+  } from '../../lib/photos/photo-session';
+
+  type CandidateStatus = 'ready' | 'processing' | 'uploading' | 'success' | 'error';
+
+  interface Candidate {
+    localId: string;
+    file: File;
+    previewUrl: string;
+    status: CandidateStatus;
+    progress: number;
+    errorMessage: string;
+    photoId: string;
+    processed: {
+      originalBlob: Blob;
+      thumbnailBlob: Blob;
+      width: number;
+      height: number;
+    } | null;
+  }
+
+  interface GuestPhoto {
+    id: string;
+    thumbnailUrl: string;
+    imageUrl: string;
+    guestName: string;
+    message: string;
+    createdAt: string;
+    alt?: string;
+  }
+
+  const roots = document.querySelectorAll('[data-photo-uploader]');
+
+  roots.forEach((rootElement) => {
+    const root = rootElement as HTMLElement;
+    const routeSlug = root.dataset.routeSlug || 'pantalla';
+
+    const cameraButton = root.querySelector('[data-action-camera]') as HTMLButtonElement | null;
+    const galleryButton = root.querySelector('[data-action-gallery]') as HTMLButtonElement | null;
+    const cameraInput = root.querySelector('[data-camera-input]') as HTMLInputElement | null;
+    const galleryInput = root.querySelector('[data-gallery-input]') as HTMLInputElement | null;
+    const dropzone = root.querySelector('[data-dropzone]') as HTMLElement | null;
+    const metaForm = root.querySelector('[data-meta-form]') as HTMLFormElement | null;
+    const previewList = root.querySelector('[data-preview-list]') as HTMLElement | null;
+    const uploadAllButton = root.querySelector('[data-upload-all]') as HTMLButtonElement | null;
+    const uploadStatus = root.querySelector('[data-upload-status]') as HTMLElement | null;
+    const ownedSection = root.querySelector('[data-owned-section]') as HTMLElement | null;
+    const ownedList = root.querySelector('[data-owned-list]') as HTMLElement | null;
+
+    const editDialog = root.querySelector('[data-edit-dialog]') as HTMLDialogElement | null;
+    const editForm = root.querySelector('[data-edit-form]') as HTMLFormElement | null;
+    const deleteDialog = root.querySelector('[data-delete-dialog]') as HTMLDialogElement | null;
+    const deleteForm = root.querySelector('[data-delete-form]') as HTMLFormElement | null;
+
+    let candidates: Candidate[] = [];
+    let ownedPhotos: GuestPhoto[] = [];
+    let selectedEditPhotoId = '';
+    let selectedDeletePhotoId = '';
+    let isUploading = false;
+
+    function setStatus(message: string) {
+      if (!uploadStatus) return;
+      uploadStatus.textContent = message;
+    }
+
+    function formatBytes(bytes: number): string {
+      if (!bytes) return '0 KB';
+      const kb = bytes / 1024;
+      if (kb < 1024) return `${Math.max(1, Math.round(kb))} KB`;
+      return `${(kb / 1024).toFixed(2)} MB`;
+    }
+
+    function updateUploadButtonState() {
+      if (!uploadAllButton) return;
+
+      const uploadableCount = candidates.filter((item) => item.status === 'ready' || item.status === 'error').length;
+      uploadAllButton.disabled = uploadableCount === 0 || isUploading;
+    }
+
+    function makeCandidateCard(candidate: Candidate): HTMLElement {
+      const card = document.createElement('article');
+      card.className = 'photo-upload__card';
+      card.dataset.localId = candidate.localId;
+
+      const image = document.createElement('img');
+      image.src = candidate.previewUrl;
+      image.alt = `Vista previa de ${candidate.file.name}`;
+      image.loading = 'lazy';
+      image.decoding = 'async';
+
+      const filename = document.createElement('p');
+      filename.className = 'photo-upload__card-name';
+      filename.textContent = candidate.file.name;
+
+      const size = document.createElement('p');
+      size.className = 'photo-upload__card-size';
+      size.textContent = formatBytes(candidate.file.size);
+
+      const status = document.createElement('p');
+      status.className = 'photo-upload__card-status';
+      status.textContent = candidate.errorMessage || candidate.status;
+
+      const progress = document.createElement('progress');
+      progress.max = 100;
+      progress.value = candidate.progress;
+      progress.hidden = candidate.status === 'ready';
+
+      const actions = document.createElement('div');
+      actions.className = 'photo-upload__card-actions';
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.textContent = 'Quitar';
+      removeButton.dataset.action = 'remove';
+      removeButton.dataset.localId = candidate.localId;
+      removeButton.disabled = candidate.status === 'uploading' || candidate.status === 'processing';
+
+      actions.appendChild(removeButton);
+
+      if (candidate.status === 'error') {
+        const retryButton = document.createElement('button');
+        retryButton.type = 'button';
+        retryButton.textContent = 'Reintentar';
+        retryButton.dataset.action = 'retry';
+        retryButton.dataset.localId = candidate.localId;
+        actions.appendChild(retryButton);
+      }
+
+      card.appendChild(image);
+      card.appendChild(filename);
+      card.appendChild(size);
+      card.appendChild(status);
+      card.appendChild(progress);
+      card.appendChild(actions);
+
+      return card;
+    }
+
+    function renderCandidates() {
+      if (!previewList) return;
+
+      previewList.innerHTML = '';
+
+      if (candidates.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'photo-upload__empty';
+        empty.textContent = 'Todavia no has seleccionado fotos.';
+        previewList.appendChild(empty);
+        updateUploadButtonState();
+        return;
+      }
+
+      candidates.forEach((candidate) => {
+        previewList.appendChild(makeCandidateCard(candidate));
+      });
+
+      updateUploadButtonState();
+    }
+
+    function updateCandidate(localId: string, partial: Partial<Candidate>) {
+      candidates = candidates.map((candidate) => {
+        if (candidate.localId !== localId) return candidate;
+        return { ...candidate, ...partial };
+      });
+      renderCandidates();
+    }
+
+    function removeCandidate(localId: string) {
+      const candidate = candidates.find((item) => item.localId === localId);
+      if (candidate) {
+        URL.revokeObjectURL(candidate.previewUrl);
+      }
+
+      candidates = candidates.filter((item) => item.localId !== localId);
+      renderCandidates();
+    }
+
+    function addFiles(fileList: File[]) {
+      const selection = validateUploadSelection(fileList, candidates.length);
+
+      if (selection.rejected.length > 0) {
+        setStatus(selection.rejected[0]?.message || selection.message);
+      }
+
+      const availableSlots = MAX_UPLOAD_FILES - candidates.length;
+      const acceptedFiles = selection.accepted.slice(0, Math.max(0, availableSlots));
+
+      if (acceptedFiles.length === 0) {
+        renderCandidates();
+        return;
+      }
+
+      const next = acceptedFiles.map((file) => ({
+        localId: crypto.randomUUID(),
+        file,
+        previewUrl: URL.createObjectURL(file),
+        status: 'ready' as CandidateStatus,
+        progress: 0,
+        errorMessage: '',
+        photoId: '',
+        processed: null,
+      }));
+
+      candidates = [...candidates, ...next];
+      renderCandidates();
+    }
+
+    async function refreshOwnedPhotos() {
+      if (!ownedSection || !ownedList) return;
+
+      const sessionIds = new Set(readSessionPhotoIds(routeSlug));
+      if (sessionIds.size === 0) {
+        ownedPhotos = [];
+        ownedSection.hidden = true;
+        ownedList.innerHTML = '';
+        return;
+      }
+
+      try {
+        const response = await fetchEventPhotos(routeSlug);
+        ownedPhotos = (response.photos || []).filter((photo) => sessionIds.has(photo.id));
+      } catch {
+        setStatus('No pudimos refrescar tus fotos por ahora.');
+      }
+
+      ownedList.innerHTML = '';
+
+      if (ownedPhotos.length === 0) {
+        ownedSection.hidden = false;
+        const empty = document.createElement('p');
+        empty.className = 'photo-upload__empty';
+        empty.textContent = 'Aun no tienes fotos registradas en esta sesion.';
+        ownedList.appendChild(empty);
+        return;
+      }
+
+      ownedSection.hidden = false;
+
+      ownedPhotos.forEach((photo) => {
+        const card = document.createElement('article');
+        card.className = 'photo-upload__owned-card';
+        card.dataset.photoId = photo.id;
+
+        const image = document.createElement('img');
+        image.src = photo.thumbnailUrl;
+        image.alt = photo.alt || (photo.guestName ? `Foto compartida por ${photo.guestName}` : 'Foto compartida por un invitado');
+        image.loading = 'lazy';
+        image.decoding = 'async';
+
+        const text = document.createElement('div');
+        text.className = 'photo-upload__owned-text';
+
+        const name = document.createElement('p');
+        name.textContent = photo.guestName || 'Invitado';
+
+        const message = document.createElement('p');
+        message.textContent = photo.message || 'Sin mensaje';
+
+        text.append(name, message);
+
+        const actions = document.createElement('div');
+        actions.className = 'photo-upload__owned-actions';
+
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.dataset.action = 'edit';
+        editButton.dataset.photoId = photo.id;
+        editButton.textContent = 'Editar';
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.dataset.action = 'delete';
+        deleteButton.dataset.photoId = photo.id;
+        deleteButton.textContent = 'Eliminar';
+
+        actions.append(editButton, deleteButton);
+
+        card.append(image, text, actions);
+        ownedList.appendChild(card);
+      });
+    }
+
+    async function uploadCandidate(candidate: Candidate, guestName: string, message: string) {
+      updateCandidate(candidate.localId, {
+        status: 'processing',
+        progress: 5,
+        errorMessage: '',
+      });
+
+      let processed = candidate.processed;
+
+      try {
+        if (!processed) {
+          processed = await processImageFile(candidate.file);
+        }
+
+        updateCandidate(candidate.localId, {
+          status: 'uploading',
+          progress: 10,
+          processed,
+        });
+
+        const formData = new FormData();
+        formData.append('original', new File([processed.originalBlob], `${candidate.localId}-original.webp`, { type: 'image/webp' }));
+        formData.append('thumbnail', new File([processed.thumbnailBlob], `${candidate.localId}-thumbnail.webp`, { type: 'image/webp' }));
+        formData.append('guestName', guestName);
+        formData.append('message', message);
+        formData.append('width', String(processed.width));
+        formData.append('height', String(processed.height));
+
+        const response = await uploadEventPhoto({
+          routeSlug,
+          formData,
+          onProgress: (value) => {
+            updateCandidate(candidate.localId, {
+              status: 'uploading',
+              progress: Math.max(10, value),
+            });
+          },
+        });
+
+        const uploadedPhoto = response.photos[0];
+        if (!uploadedPhoto) {
+          throw new Error(response.failed?.[0]?.message || 'No se pudo subir esta foto.');
+        }
+
+        registerSessionPhotoId(routeSlug, uploadedPhoto.id);
+
+        updateCandidate(candidate.localId, {
+          status: 'success',
+          progress: 100,
+          errorMessage: '',
+          photoId: uploadedPhoto.id,
+        });
+      } catch (error) {
+        updateCandidate(candidate.localId, {
+          status: 'error',
+          progress: 0,
+          errorMessage: error instanceof Error ? error.message : 'No se pudo subir esta foto.',
+        });
+      }
+    }
+
+    async function uploadAll() {
+      if (isUploading || !metaForm) return;
+
+      isUploading = true;
+      updateUploadButtonState();
+
+      const formData = new FormData(metaForm);
+      const guestName = sanitizeGuestName(formData.get('guestName'));
+      const message = sanitizeGuestMessage(formData.get('message'));
+      const pending = candidates.filter((item) => item.status === 'ready' || item.status === 'error');
+
+      if (pending.length === 0) {
+        isUploading = false;
+        updateUploadButtonState();
+        return;
+      }
+
+      for (const candidate of pending) {
+        // ponytail: secuencial para simplificar progreso por archivo y manejo de rollback.
+        // Se puede paralelizar por lotes si el throughput se vuelve un cuello de botella.
+        // TODO(produccion): agregar token firmado por foto en vez de confiar en localStorage/header.
+        await uploadCandidate(candidate, guestName, message);
+      }
+
+      isUploading = false;
+      updateUploadButtonState();
+
+      const successCount = candidates.filter((item) => item.status === 'success').length;
+      const totalAttempted = pending.length;
+
+      if (successCount > 0 && successCount === totalAttempted) {
+        setStatus('Tus fotos ya aparecen en la pantalla.');
+      } else if (successCount > 0) {
+        setStatus(`Se subieron ${successCount} de ${totalAttempted} fotos.`);
+      } else {
+        setStatus('No se pudo subir ninguna foto. Revisa los errores y reintenta.');
+      }
+
+      await refreshOwnedPhotos();
+    }
+
+    function handlePreviewAction(event: Event) {
+      const target = event.target as HTMLElement;
+      const action = target.dataset.action;
+      const localId = target.dataset.localId;
+      if (!action || !localId) return;
+
+      if (action === 'remove') {
+        removeCandidate(localId);
+        return;
+      }
+
+      if (action === 'retry') {
+        updateCandidate(localId, {
+          status: 'ready',
+          progress: 0,
+          errorMessage: '',
+        });
+      }
+    }
+
+    function openEditDialog(photoId: string) {
+      if (!editDialog || !editForm) return;
+      const photo = ownedPhotos.find((item) => item.id === photoId);
+      if (!photo) return;
+
+      selectedEditPhotoId = photo.id;
+      const nameInput = editForm.elements.namedItem('guestName') as HTMLInputElement | null;
+      const messageInput = editForm.elements.namedItem('message') as HTMLTextAreaElement | null;
+      if (nameInput) nameInput.value = photo.guestName || '';
+      if (messageInput) messageInput.value = photo.message || '';
+      editDialog.showModal();
+    }
+
+    function openDeleteDialog(photoId: string) {
+      if (!deleteDialog) return;
+      selectedDeletePhotoId = photoId;
+      deleteDialog.showModal();
+    }
+
+    async function savePhotoEdit() {
+      if (!editForm || !selectedEditPhotoId) return;
+
+      const formData = new FormData(editForm);
+      const guestName = sanitizeGuestName(formData.get('guestName'));
+      const message = sanitizeGuestMessage(formData.get('message'));
+
+      try {
+        const response = await updateEventPhoto(
+          routeSlug,
+          selectedEditPhotoId,
+          { guestName, message },
+          buildOwnedPhotoIdsHeader(routeSlug),
+        );
+
+        ownedPhotos = ownedPhotos.map((photo) => {
+          if (photo.id !== selectedEditPhotoId) return photo;
+          return response.photo;
+        });
+
+        setStatus('Foto actualizada.');
+        await refreshOwnedPhotos();
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'No se pudo actualizar la foto.');
+      }
+    }
+
+    async function confirmDeletePhoto() {
+      if (!selectedDeletePhotoId) return;
+
+      try {
+        await deleteEventPhoto(routeSlug, selectedDeletePhotoId, buildOwnedPhotoIdsHeader(routeSlug));
+        removeSessionPhotoId(routeSlug, selectedDeletePhotoId);
+        ownedPhotos = ownedPhotos.filter((photo) => photo.id !== selectedDeletePhotoId);
+        setStatus('Foto eliminada.');
+        await refreshOwnedPhotos();
+      } catch (error) {
+        setStatus(error instanceof Error ? error.message : 'No se pudo eliminar la foto.');
+      }
+    }
+
+    cameraButton?.addEventListener('click', () => cameraInput?.click());
+    galleryButton?.addEventListener('click', () => galleryInput?.click());
+
+    cameraInput?.addEventListener('change', () => {
+      const files = Array.from(cameraInput.files || []);
+      addFiles(files);
+      cameraInput.value = '';
+    });
+
+    galleryInput?.addEventListener('change', () => {
+      const files = Array.from(galleryInput.files || []);
+      addFiles(files);
+      galleryInput.value = '';
+    });
+
+    dropzone?.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropzone.classList.add('is-over');
+    });
+
+    dropzone?.addEventListener('dragleave', () => {
+      dropzone.classList.remove('is-over');
+    });
+
+    dropzone?.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropzone.classList.remove('is-over');
+      const files = Array.from(event.dataTransfer?.files || []);
+      addFiles(files);
+    });
+
+    previewList?.addEventListener('click', handlePreviewAction);
+    uploadAllButton?.addEventListener('click', uploadAll);
+
+    ownedList?.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const action = target.dataset.action;
+      const photoId = target.dataset.photoId;
+      if (!action || !photoId) return;
+
+      if (action === 'edit') {
+        openEditDialog(photoId);
+        return;
+      }
+
+      if (action === 'delete') {
+        openDeleteDialog(photoId);
+      }
+    });
+
+    editForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      await savePhotoEdit();
+      editDialog?.close();
+    });
+
+    deleteForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const submitter = (event as SubmitEvent).submitter as HTMLButtonElement | null;
+      if (submitter?.value !== 'confirm') {
+        deleteDialog?.close();
+        return;
+      }
+
+      await confirmDeletePhoto();
+      deleteDialog?.close();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      candidates.forEach((candidate) => {
+        URL.revokeObjectURL(candidate.previewUrl);
+      });
+    }, { once: true });
+
+    renderCandidates();
+    refreshOwnedPhotos();
+  });
+</script>
