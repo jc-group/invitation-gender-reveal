@@ -1,6 +1,11 @@
 ---
+import QrCode from './QrCode.astro';
+import PhotoGallery from './PhotoGallery.astro';
+
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
 const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+const siteUrl = import.meta.env.SITE_URL ?? 'http://localhost:4321';
+const uploadUrl = siteUrl + '/upload';
 ---
 
 <section
@@ -61,9 +66,16 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
   </div>
 
   <header class="live-display__header">
-    <p class="live-display__eyebrow">Gender Reveal</p>
-    <h1>Predicciones en vivo</h1>
-    <p>Catherine & Josafat</p>
+    <div class="live-display__header-content">
+      <div class="live-display__header-text">
+        <p class="live-display__eyebrow">Gender Reveal</p>
+        <h1>Predicciones en vivo</h1>
+        <p>Catherine & Josafat</p>
+      </div>
+      <div class="live-display__header-qr">
+        <QrCode url={uploadUrl} size={100} />
+      </div>
+    </div>
   </header>
 
   <main class="live-display__main">
@@ -108,27 +120,49 @@ const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
       0 votos registrados
     </p>
 
-    <section class="live-display__messages" aria-label="Mensajes de invitados">
-      <div class="live-display__messages-header">
-        <p class="live-display__messages-title">Mensajes de los invitados</p>
-        <p class="live-display__message-count" data-display-message-count>0 / 0</p>
+    <div class="live-display__bottom">
+      <div class="live-display__messages-wrapper">
+        <section class="live-display__messages-col" aria-label="Columna de mensajes 1">
+          <div class="live-display__messages-header">
+            <p class="live-display__messages-title">Mensajes</p>
+            <p class="live-display__message-count" data-display-message-count>0 / 0</p>
+          </div>
+
+          <article class="live-display__message-card" data-display-message-card>
+            <blockquote data-display-message></blockquote>
+            <footer>
+              <span data-display-message-name></span>
+              <span data-display-message-prediction></span>
+            </footer>
+          </article>
+        </section>
+
+        <section class="live-display__messages-col live-display__messages-col--secondary" aria-label="Columna de mensajes 2">
+          <div class="live-display__messages-header">
+            <p class="live-display__messages-title">Mensajes</p>
+          </div>
+
+          <article class="live-display__message-card" data-display-message-card-2>
+            <blockquote data-display-message-2></blockquote>
+            <footer>
+              <span data-display-message-name-2></span>
+              <span data-display-message-prediction-2></span>
+            </footer>
+          </article>
+        </section>
       </div>
 
-      <article class="live-display__message-card" data-display-message-card>
-        <blockquote data-display-message>
-          Los mensajes aparecerán aquí durante el evento.
-        </blockquote>
-        <footer>
-          <span data-display-message-name>Catherine & Josafat</span>
-          <span data-display-message-prediction></span>
-        </footer>
-      </article>
-    </section>
+      <section class="live-display__gallery-col" aria-label="Galería de fotos">
+        <PhotoGallery supabaseUrl={supabaseUrl} supabaseAnonKey={supabaseAnonKey} />
+      </section>
+    </div>
   </main>
 
   <footer class="live-display__footer">
-    <span>Actualizando en vivo</span>
-    <span data-display-updated>Esperando datos...</span>
+    <div class="live-display__footer-status">
+      <span>Actualizando en vivo</span>
+      <span data-display-updated>Esperando datos...</span>
+    </div>
   </footer>
 </section>
 

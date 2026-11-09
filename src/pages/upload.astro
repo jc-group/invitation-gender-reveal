@@ -1,0 +1,501 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL ?? '';
+const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY ?? '';
+const siteUrl = import.meta.env.SITE_URL ?? 'http://localhost:4321';
+---
+
+<Layout bodyClass="upload-page">
+  <main class="upload">
+    <header class="upload__header">
+      <p class="upload__eyebrow">Gender Reveal</p>
+      <h1 class="upload__title">Sube tu foto</h1>
+      <p class="upload__subtitle">Comparte un momento especial del evento</p>
+    </header>
+
+    <form
+      class="upload__form"
+      id="upload-form"
+      data-supabase-url={supabaseUrl}
+      data-supabase-anon-key={supabaseAnonKey}
+    >
+      <div class="upload__dropzone" id="dropzone">
+        <input
+          type="file"
+          id="file-input"
+          name="photo"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          hidden
+        />
+
+        <div class="upload__dropzone-content" id="dropzone-content">
+          <div class="upload__dropzone-icon" aria-hidden="true">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+              <path d="M12 12v9" />
+              <path d="m16 16-4-4-4 4" />
+            </svg>
+          </div>
+          <p class="upload__dropzone-text">Arrastra tu foto aquí</p>
+          <p class="upload__dropzone-hint">o presiona para buscar</p>
+        </div>
+
+        <div class="upload__preview" id="preview" hidden>
+          <img id="preview-image" src="" alt="Vista previa" />
+          <button type="button" class="upload__preview-remove" id="remove-preview" aria-label="Quitar foto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <label class="upload__field">
+        <span>Tu nombre (opcional)</span>
+        <input
+          type="text"
+          name="name"
+          placeholder="Cómo te identificas?"
+          autocomplete="name"
+        />
+      </label>
+
+      <button class="upload__button" type="submit" id="submit-btn">
+        Subir foto
+      </button>
+
+      <p class="upload__status" id="status" aria-live="polite"></p>
+    </form>
+
+    <footer class="upload__footer">
+      <p>Usa este link para subir fotos desde tu teléfono</p>
+      <p class="upload__url">{siteUrl}/upload</p>
+    </footer>
+  </main>
+</Layout>
+
+<style>
+  .upload-page {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background:
+      linear-gradient(rgba(239, 232, 216, 0.78), rgba(239, 232, 216, 0.88)),
+      url("/assets/invitation/watercolor/paper-texture.png"),
+      #efe8d8;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .upload {
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 24px;
+    border-radius: 28px;
+    background:
+      linear-gradient(rgba(255, 250, 240, 0.9), rgba(255, 250, 240, 0.95)),
+      url("/assets/invitation/watercolor/paper-texture.png");
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 24px 64px rgba(80, 64, 45, 0.14);
+  }
+
+  .upload__header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .upload__eyebrow {
+    margin: 0 0 6px;
+    color: rgba(94, 76, 64, 0.62);
+    font-family: var(--font-ui);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .upload__title {
+    margin: 0;
+    color: #8d6a54;
+    font-family: var(--font-main);
+    font-size: clamp(2rem, 8vw, 2.8rem);
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .upload__subtitle {
+    margin: 8px 0 0;
+    color: rgba(94, 76, 64, 0.74);
+    font-size: 1rem;
+  }
+
+  .upload__form {
+    display: grid;
+    gap: 18px;
+  }
+
+  .upload__dropzone {
+    position: relative;
+    min-height: 200px;
+    border: 2px dashed rgba(141, 106, 84, 0.24);
+    border-radius: 20px;
+    background: rgba(255, 250, 240, 0.6);
+    cursor: pointer;
+    transition:
+      border-color 200ms ease,
+      background 200ms ease;
+    overflow: hidden;
+  }
+
+  .upload__dropzone:hover,
+  .upload__dropzone.is-dragging {
+    border-color: rgba(141, 106, 84, 0.48);
+    background: rgba(255, 250, 240, 0.85);
+  }
+
+  .upload__dropzone-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .upload__dropzone-icon {
+    color: rgba(141, 106, 84, 0.48);
+    margin-bottom: 4px;
+  }
+
+  .upload__dropzone-text {
+    margin: 0;
+    color: #8d6a54;
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  .upload__dropzone-hint {
+    margin: 0;
+    color: rgba(94, 76, 64, 0.58);
+    font-size: 0.85rem;
+  }
+
+  .upload__preview {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 250, 240, 0.95);
+  }
+
+  .upload__preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  .upload__preview-remove {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: #8d6a54;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transition: transform 150ms ease;
+  }
+
+  .upload__preview-remove:hover {
+    transform: scale(1.08);
+  }
+
+  .upload__field {
+    display: grid;
+    gap: 7px;
+  }
+
+  .upload__field span {
+    color: rgba(94, 76, 64, 0.74);
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .upload__field input {
+    width: 100%;
+    border: 1px solid rgba(141, 106, 84, 0.18);
+    border-radius: 14px;
+    padding: 12px 14px;
+    color: #5e4c40;
+    background: rgba(255, 250, 240, 0.78);
+    font: inherit;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 200ms ease, box-shadow 200ms ease;
+  }
+
+  .upload__field input:focus {
+    border-color: rgba(201, 111, 146, 0.48);
+    box-shadow: 0 0 0 4px rgba(242, 198, 200, 0.28);
+  }
+
+  .upload__field input::placeholder {
+    color: rgba(94, 76, 64, 0.42);
+  }
+
+  .upload__button {
+    min-height: 52px;
+    padding: 14px 24px;
+    border: none;
+    border-radius: 999px;
+    background: #8d6a54;
+    color: #fffaf0;
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition:
+      background 200ms ease,
+      transform 150ms ease;
+  }
+
+  .upload__button:hover:not(:disabled) {
+    background: #7a5a44;
+    transform: translateY(-1px);
+  }
+
+  .upload__button:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  .upload__button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .upload__status {
+    min-height: 22px;
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+
+  .upload__status[data-state="success"] {
+    color: #4f7d5a;
+  }
+
+  .upload__status[data-state="error"] {
+    color: #a45b5b;
+  }
+
+  .upload__status[data-state="loading"] {
+    color: rgba(94, 76, 64, 0.62);
+  }
+
+  .upload__footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(141, 106, 84, 0.12);
+    text-align: center;
+  }
+
+  .upload__footer p {
+    margin: 0;
+    color: rgba(94, 76, 64, 0.62);
+    font-size: 0.85rem;
+  }
+
+  .upload__url {
+    margin-top: 6px;
+    color: #8d6a54 !important;
+    font-weight: 700;
+    font-size: 1rem !important;
+    word-break: break-all;
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    var form = document.getElementById('upload-form');
+    var dropzone = document.getElementById('dropzone');
+    var fileInput = document.getElementById('file-input');
+    var dropzoneContent = document.getElementById('dropzone-content');
+    var preview = document.getElementById('preview');
+    var previewImage = document.getElementById('preview-image');
+    var removePreview = document.getElementById('remove-preview');
+    var submitBtn = document.getElementById('submit-btn');
+    var status = document.getElementById('status');
+
+    if (!form || !dropzone || !fileInput) return;
+
+    var supabaseUrl = form.getAttribute('data-supabase-url');
+    var supabaseAnonKey = form.getAttribute('data-supabase-anon-key');
+    var selectedFile = null;
+
+    function showPreview(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        previewImage.src = e.target.result;
+        dropzoneContent.hidden = true;
+        preview.hidden = false;
+        selectedFile = file;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearPreview() {
+      previewImage.src = '';
+      preview.hidden = true;
+      dropzoneContent.hidden = false;
+      selectedFile = null;
+      fileInput.value = '';
+    }
+
+    dropzone.addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        showPreview(this.files[0]);
+      }
+    });
+
+    removePreview.addEventListener('click', function(e) {
+      e.stopPropagation();
+      clearPreview();
+    });
+
+    dropzone.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      dropzone.classList.add('is-dragging');
+    });
+
+    dropzone.addEventListener('dragleave', function(e) {
+      e.preventDefault();
+      dropzone.classList.remove('is-dragging');
+    });
+
+    dropzone.addEventListener('drop', function(e) {
+      e.preventDefault();
+      dropzone.classList.remove('is-dragging');
+
+      var file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        var dt = new DataTransfer();
+        dt.items.add(file);
+        fileInput.files = dt.files;
+        showPreview(file);
+      }
+    });
+
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      if (!selectedFile) {
+        status.textContent = 'Selecciona una foto primero.';
+        status.dataset.state = 'error';
+        return;
+      }
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        status.textContent = 'Falta configurar Supabase.';
+        status.dataset.state = 'error';
+        return;
+      }
+
+      var validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(selectedFile.type)) {
+        status.textContent = 'Solo se permiten fotos en formato JPG, PNG o WEBP.';
+        status.dataset.state = 'error';
+        return;
+      }
+
+      var maxSize = 10 * 1024 * 1024;
+      if (selectedFile.size > maxSize) {
+        status.textContent = 'La foto debe ser menor a 10MB.';
+        status.dataset.state = 'error';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      status.textContent = 'Subiendo foto...';
+      status.dataset.state = 'loading';
+
+      try {
+        var ext = selectedFile.name.split('.').pop();
+        var filename = Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+
+        var formData = new FormData();
+        formData.append('file', selectedFile);
+
+        var response = await fetch(
+          supabaseUrl + '/storage/v1/object/guest-photos/' + filename,
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + supabaseAnonKey,
+              'x-upsert': 'true'
+            },
+            body: formData
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error('Upload failed: ' + response.status);
+        }
+
+        // Registrar la foto en la tabla photos para Realtime
+        var photoResponse = await fetch(
+          supabaseUrl + '/rest/v1/photos',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': supabaseAnonKey,
+              'Authorization': 'Bearer ' + supabaseAnonKey,
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ filename: filename })
+          }
+        );
+
+        if (!photoResponse.ok) {
+          console.warn('Could not register photo in database');
+        }
+
+        status.textContent = '¡Foto subida con éxito!';
+        status.dataset.state = 'success';
+
+        setTimeout(clearPreview, 1500);
+      } catch (err) {
+        console.error(err);
+        status.textContent = 'No se pudo subir la foto. Intenta de nuevo.';
+        status.dataset.state = 'error';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  })();
+</script>

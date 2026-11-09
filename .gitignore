@@ -26,3 +26,6 @@ pnpm-debug.log*
 # opencode local files
 .agents/
 skills-lock.json
+
+# test artifacts
+/test-results

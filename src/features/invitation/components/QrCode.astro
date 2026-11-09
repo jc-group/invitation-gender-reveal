@@ -1,0 +1,47 @@
+---
+type Props = {
+  url: string;
+  size?: number;
+};
+
+const { url, size = 180 } = Astro.props;
+const encodedUrl = encodeURIComponent(url);
+const qrSrc = `https://quickchart.io/qr?size=${size}&text=${encodedUrl}`;
+---
+
+<div class="qr-code">
+  <img
+    src={qrSrc}
+    alt="Código QR para subir fotos"
+    width={size}
+    height={size}
+    loading="eager"
+  />
+  <p class="qr-code__label">Escanea para subir tu foto</p>
+</div>
+
+<style>
+  .qr-code {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .qr-code img {
+    display: block;
+    border-radius: 16px;
+    background: white;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(80, 64, 45, 0.12);
+  }
+
+  .qr-code__label {
+    margin: 0;
+    color: rgba(94, 76, 64, 0.78);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+  }
+</style>

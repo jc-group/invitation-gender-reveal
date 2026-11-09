@@ -1,0 +1,248 @@
+---
+type Props = {
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+};
+
+const { supabaseUrl, supabaseAnonKey } = Astro.props;
+---
+
+<section class="photo-gallery" data-photo-gallery data-supabase-url={supabaseUrl} data-supabase-anon-key={supabaseAnonKey}>
+  <header class="photo-gallery__header">
+    <h2>Fotos de los invitados</h2>
+    <span class="photo-gallery__count" data-photo-count>0 fotos</span>
+  </header>
+
+  <div class="photo-gallery__container" data-photo-container>
+    <div class="photo-gallery__empty" data-photo-empty>
+      <p>Las fotos de los invitados aparecerán aquí</p>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" is:inline></script>
+
+<style>
+  .photo-gallery {
+    height: 50vh;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    margin-top: auto;
+  }
+
+  .photo-gallery__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    flex-shrink: 0;
+  }
+
+  .photo-gallery__header h2 {
+    margin: 0;
+    font-family: var(--font-main);
+    font-size: clamp(1.1rem, 2.5vmin, 1.6rem);
+    color: #8d6a54;
+  }
+
+  .photo-gallery__count {
+    color: rgba(94, 76, 64, 0.62);
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .photo-gallery__container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    border-radius: 16px;
+    background: rgba(255, 250, 240, 0.5);
+    overflow: hidden;
+  }
+
+  .photo-gallery__empty {
+    text-align: center;
+    color: rgba(94, 76, 64, 0.5);
+    font-size: 0.9rem;
+  }
+
+  .photo-gallery__empty[hidden] {
+    display: none;
+  }
+
+  .photo-gallery__item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 100%;
+    max-height: 100%;
+    animation: photo-enter 400ms ease both;
+  }
+
+  .photo-gallery__item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 10px;
+    display: block;
+  }
+
+  @keyframes photo-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .photo-gallery__item {
+      animation: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function() {
+    var gallery = document.querySelector('[data-photo-gallery]');
+    if (!gallery) return;
+
+    var supabaseUrl = gallery.getAttribute('data-supabase-url');
+    var supabaseAnonKey = gallery.getAttribute('data-supabase-anon-key');
+    var container = gallery.querySelector('[data-photo-container]');
+    var emptyState = gallery.querySelector('[data-photo-empty]');
+    var countEl = gallery.querySelector('[data-photo-count]');
+
+    if (!supabaseUrl || !supabaseAnonKey || !container) {
+      return;
+    }
+
+    var loadedFilenames = new Set();
+    var currentPhotoEl = null;
+
+    var astroCidAttr = Array.from(gallery.attributes)
+      .find(function(attr) { return attr.name.startsWith('data-astro-cid-'); });
+    var astroCid = astroCidAttr ? astroCidAttr.name : null;
+
+    function getPublicUrl(filename) {
+      return supabaseUrl + '/storage/v1/object/public/guest-photos/' + filename;
+    }
+
+    function renderPhoto(photo) {
+      if (!photo || !photo.filename) {
+        console.log('[PhotoGallery] Invalid photo data:', photo);
+        return;
+      }
+
+      console.log('[PhotoGallery] Rendering photo:', photo.filename);
+
+      if (emptyState) {
+        emptyState.hidden = true;
+      }
+
+      if (currentPhotoEl) {
+        container.removeChild(currentPhotoEl);
+      }
+
+      var item = document.createElement('div');
+      item.className = 'photo-gallery__item';
+      if (astroCid) item.setAttribute(astroCid, '');
+
+      var img = document.createElement('img');
+      img.src = getPublicUrl(photo.filename);
+      img.alt = 'Foto de invitado';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      if (astroCid) img.setAttribute(astroCid, '');
+
+      img.onload = function() {
+        console.log('[PhotoGallery] Image loaded:', photo.filename);
+      };
+      img.onerror = function() {
+        console.error('[PhotoGallery] Image failed:', photo.filename, img.src);
+      };
+
+      item.appendChild(img);
+      container.appendChild(item);
+      currentPhotoEl = item;
+
+      loadedFilenames.clear();
+      loadedFilenames.add(photo.filename);
+      updateCount();
+    }
+
+    function updateCount() {
+      if (!countEl) return;
+      var total = loadedFilenames.size;
+      countEl.textContent = total === 1 ? '1 foto' : total + ' fotos';
+    }
+
+    function fetchPhotos() {
+      return fetch(
+        supabaseUrl + '/rest/v1/photos?order=created_at.desc&limit=1',
+        {
+          headers: {
+            'apikey': supabaseAnonKey,
+            'Authorization': 'Bearer ' + supabaseAnonKey
+          }
+        }
+      )
+        .then(function(response) {
+          if (!response.ok) throw new Error('Failed to fetch photos');
+          return response.json();
+        })
+        .then(function(data) {
+          var photos = Array.isArray(data) ? data : [];
+          if (photos.length > 0) {
+            renderPhoto(photos[0]);
+          }
+        })
+        .catch(function(err) {
+          console.warn('Could not load photos:', err);
+        });
+    }
+
+    function setupRealtime() {
+      if (typeof window.supabase === 'undefined') {
+        console.warn('Supabase client not loaded, falling back to polling');
+        fetchPhotos();
+        setInterval(fetchPhotos, 10000);
+        return;
+      }
+
+      var supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+      var channel = supabase
+        .channel('photos-gallery')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'photos'
+          },
+          function(payload) {
+            renderPhoto(payload.new);
+          }
+        )
+        .subscribe(function(status) {
+          if (status === 'CHANNEL_ERROR') {
+            console.warn('Realtime subscription failed, using polling');
+            fetchPhotos();
+            setInterval(fetchPhotos, 10000);
+          }
+        });
+    }
+
+    fetchPhotos().then(function() {
+      setupRealtime();
+    });
+  })();
+</script>

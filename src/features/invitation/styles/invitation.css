@@ -1518,6 +1518,41 @@ body.live-display-page .live-display {
   z-index: 1;
 }
 
+.live-display__header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: clamp(12px, 2vmin, 24px);
+}
+
+.live-display__header-text {
+  text-align: left;
+}
+
+.live-display__header-qr {
+  flex-shrink: 0;
+}
+
+.live-display__header-qr img {
+  width: clamp(70px, 10vmin, 100px);
+  height: clamp(70px, 10vmin, 100px);
+  border-radius: 12px;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(80, 64, 45, 0.12);
+}
+
+@media (max-width: 500px) {
+  .live-display__header-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .live-display__header-text {
+    text-align: center;
+  }
+}
+
 .live-display__eyebrow {
   margin: 0 0 4px;
   text-transform: uppercase;
@@ -1542,11 +1577,47 @@ body.live-display-page .live-display {
 .live-display__main {
   min-height: 0;
   display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
   gap: clamp(10px, 1.8vh, 24px);
   align-content: stretch;
   position: relative;
   z-index: 1;
+}
+
+.live-display__bottom {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: clamp(12px, 2vmin, 24px);
+  align-content: start;
+}
+
+.live-display__messages-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(8px, 1.2vmin, 14px);
+}
+
+.live-display__messages-col,
+.live-display__gallery-col {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(8px, 1.2vmin, 14px);
+}
+
+.live-display__messages-col {
+  align-content: start;
+  flex: 1;
+}
+
+.live-display__messages-col--secondary .live-display__message-card {
+  height: auto;
+  min-height: 100%;
+}
+
+.live-display__gallery-col {
+  align-content: stretch;
 }
 
 .live-display__votes {
@@ -1677,8 +1748,8 @@ body.live-display-page .live-display {
 }
 
 .live-display__message-card {
+  flex: 1;
   min-height: 0;
-  height: clamp(150px, 26vh, 300px);
   display: grid;
   align-content: center;
   gap: clamp(8px, 1.4vmin, 18px);
@@ -1726,6 +1797,12 @@ body.live-display-page .live-display {
   position: relative;
   z-index: 1;
   min-height: 0;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 12px;
+}
+
+.live-display__footer-status {
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -1806,6 +1883,14 @@ body.live-display-page .live-display {
   .live-display__footer {
     flex-direction: column;
     text-align: center;
+  }
+
+  .live-display__bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .live-display__message-card {
+    height: clamp(120px, 30vh, 220px);
   }
 }
 

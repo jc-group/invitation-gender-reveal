@@ -263,4 +263,60 @@ select encode(sha256('tu-palabra-secreta'::bytea), 'hex');
 ```
 
 Reemplaza `PEGAR_AQUI_EL_HASH_DEL_CODIGO` con el resultado.
+
+## 9. Storage para fotos de invitados
+
+### Crear bucket
+
+```sql
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'guest-photos',
+  'guest-photos',
+  true,
+  10485760,
+  array['image/jpeg', 'image/png', 'image/webp']
+);
 ```
+
+### Crear policies
+
+```sql
+-- Policy para subir fotos (cualquier persona)
+create policy "Anyone can upload guest photos"
+on storage.objects for insert
+to anon
+with check ( bucket_id = 'guest-photos' );
+
+-- Policy para ver fotos (público)
+create policy "Guest photos are public"
+on storage.objects for select
+to anon
+using ( bucket_id = 'guest-photos' );
+```
+
+### Tabla photos (para Realtime)
+
+```sql
+create table public.photos (
+  id uuid primary key default gen_random_uuid(),
+  filename text not null,
+  created_at timestamptz default now()
+);
+
+alter table public.photos enable row level security;
+
+create policy "Anyone can insert photos"
+on public.photos for insert to anon with check (true);
+
+create policy "Anyone can view photos"
+on public.photos for select to anon using (true);
+
+alter publication supabase_realtime add table public.photos;
+```
+
+### Uso
+
+URL pública de fotos: `${SUPABASE_URL}/storage/v1/object/public/guest-photos/${filename}`
+
+Listar fotos: `GET /rest/v1/photos?order=created_at.desc`
